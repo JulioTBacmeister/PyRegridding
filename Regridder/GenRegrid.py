@@ -28,13 +28,14 @@ import esmfRegrid as erg
 import dask
 import dask.array as da
 
-#import VertRegrid as vrg
+import GlobalVarClass
+from GlobalVarClass import Gv
 
 # "ChatGPI version" --- 
 import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
 
-import FVRegrid as FV
+import FVStagger as FV
 
 # import modules in other directories
 sys.path.append('../Utils/')
@@ -52,9 +53,15 @@ importlib.reload( MkP )
 importlib.reload( hum )
 importlib.reload( GrU )
 importlib.reload( Con )
+#importlib.reload( Gv )
+
+#importlib.reload( Globals2 )
 
 # Physical Constants
 Rdry = Con.Rdry() # 
+
+
+#Gv = Globals2.VariableContainer()
 
 #-------------------------------------------------------------
 #  Naming conventions
@@ -82,6 +89,7 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     # regridding of ERA reanalyses.
     #---------------------------------------------
 
+    """
     global MyDst, MyDstVgrid, MySrc
     global regrd,srcf,dstf
     global phis_CAM, phis_ERA
@@ -95,45 +103,46 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     global doWilliamsonOlson
 
     global p_00_ERA, p_00_CAM
-
+    """
+    
     #------- 
     # Begin
     #-------
+    
+    
     tic_overall = time.perf_counter()
-    MyDst,MyDstVgrid,MySrc = Dst,DstVgrid,Src
+    Gv.MyDst,Gv.MyDstVgrid,Gv.MySrc = Dst,DstVgrid,Src
 
-    doWilliamsonOlson = WOsrf
-    p_00_CAM = 100_000.
+    Gv.doWilliamsonOlson = WOsrf
+    Gv.p_00_CAM = 100_000.
 
     print( f"In prep Src= {Src} to Dst={Dst} " )
     if (Dst == 'ne30pg3'):
-        dstHkey = 'c'
-        dst_type='mesh'
-        dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/ne30pg3_scrip_170611.nc'
-        dst_TopoFile = '/glade/p/cgd/amp/juliob/bndtopo/latest/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
+        Gv.dstHkey = 'c'
+        Gv.dst_type='mesh'
+        Gv.dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/ne30pg3_scrip_170611.nc'
+        Gv.dst_TopoFile = '/glade/p/cgd/amp/juliob/bndtopo/latest/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
 
     if ((Dst == 'fv0.9x1.25') or (Dst=='fv1x1')):
-        dstHkey = 'yx'
-        dst_type='grid'
-        dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/fv0.9x1.25_141008.nc'
+        Gv.dstHkey = 'yx'
+        Gv.dst_type='grid'
+        Gv.dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/fv0.9x1.25_141008.nc'
         #dst_TopoFile='/glade/p/cgd/amp/juliob/bndtopo/latest/fv_0.9x1.25_gmted2010_modis_bedmachine_nc3000_Laplace0100_20220708.nc'
-        dst_TopoFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
+        Gv.dst_TopoFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
 
     if (Src == 'ERA5'):
-        srcHkey = 'yx'
-        src_type='grid'
-        src_scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_640x1280_scrip.nc'
-        src_TopoFile = '/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
-        p_00_ERA = 1.0
+        Gv.srcHkey = 'yx'
+        Gv.src_type='grid'
+        Gv.src_scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_640x1280_scrip.nc'
+        Gv.src_TopoFile = '/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
+        Gv.p_00_ERA = 1.0
 
     if (Src == 'ERAI'):
-        srcHkey = 'yx'
-        src_type='grid'
-        #print(" READING PRECOMPUTED SCRIP FROM JERRY/PATRICK CODE !!!!!!!! " )
-        #src_scrip = '/glade/work/juliob/ERA-I-grids/Sgrid_SRC.nc'
-        src_scrip = '/glade/work/juliob/ERA-I-grids/ERAI_256x512_scrip.nc'
-        src_TopoFile = '/glade/scratch/juliob/erai_2017/ei.oper.an.ml.regn128sc.2017010100.nc'
-        p_00_ERA = 100_000.
+        Gv.srcHkey = 'yx'
+        Gv.src_type='grid'
+        Gv.src_scrip = '/glade/work/juliob/ERA-I-grids/ERAI_256x512_scrip.nc'
+        Gv.src_TopoFile = '/glade/scratch/juliob/erai_2017/ei.oper.an.ml.regn128sc.2017010100.nc'
+        Gv.p_00_ERA = 100_000.
 
     # ----------------------------------------------
     # Get DST vertical grid from a file.
@@ -142,20 +151,20 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     # ----------------------------------------------
     if (DstVgrid == 'L58' ):
         # Read in CAM L58 vertical grid
-        dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+        Gv.dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
 
     if (DstVgrid == 'L32' ):
-        dstVgridFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/inic/se/f.e22.FC2010climo.ne30pg3_ne30pg3_mg17.cam6_2_022.002.cam.i.0020-01-01-00000_c200610.nc'
+        Gv.dstVgridFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/inic/se/f.e22.FC2010climo.ne30pg3_ne30pg3_mg17.cam6_2_022.002.cam.i.0020-01-01-00000_c200610.nc'
 
     # Set grid keys for Src ERA5 reanalysis
-    srcTHkey  = 't'  + srcHkey
-    srcZHkey  = 'z'  + srcHkey
-    srcTZHkey = 'tz' + srcHkey
+    Gv.srcTHkey  = 't'  + Gv.srcHkey
+    Gv.srcZHkey  = 'z'  + Gv.srcHkey
+    Gv.srcTZHkey = 'tz' + Gv.srcHkey
 
     # Set grid keys for Dst CAM-SE
-    dstTHkey  = 't'  + dstHkey
-    dstZHkey  = 'z'  + dstHkey
-    dstTZHkey = 'tz' + dstHkey
+    Gv.dstTHkey  = 't'  + Gv.dstHkey
+    Gv.dstZHkey  = 'z'  + Gv.dstHkey
+    Gv.dstTZHkey = 'tz' + Gv.dstHkey
  
     # ----------------------------------------------
     # Get all topo data we will use
@@ -163,25 +172,25 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     # lon and lat and area for CAM (Dst)
     # grid.
     # ----------------------------------------------
-    dsTopo_CAM=xr.open_dataset( dst_TopoFile )
+    dsTopo_CAM=xr.open_dataset( Gv.dst_TopoFile )
     varsCAM  = list( dsTopo_CAM.variables )
-    phis_CAM = dsTopo_CAM['PHIS'].values
-    lon_CAM  = dsTopo_CAM['lon'].values
-    lat_CAM  = dsTopo_CAM['lat'].values
+    Gv.phis_CAM = dsTopo_CAM['PHIS'].values
+    Gv.lon_CAM  = dsTopo_CAM['lon'].values
+    Gv.lat_CAM  = dsTopo_CAM['lat'].values
     if ('area' in varsCAM):
-        area_CAM = dsTopo_CAM['area'].values
+        Gv.area_CAM = dsTopo_CAM['area'].values
     else:
-        area_CAM = GrU.area2d( lon=lon_CAM, lat=lat_CAM )
+        Gv.area_CAM = GrU.area2d( lon=Gv.lon_CAM, lat=Gv.lat_CAM )
 
     if (Src == 'ERA5'):
         # Read in ERA5 topography
-        dsTopo_ERA=xr.open_dataset( src_TopoFile )
-        phis_ERA=dsTopo_ERA['Z_GDS4_SFC'].values
+        dsTopo_ERA=xr.open_dataset( Gv.src_TopoFile )
+        Gv.phis_ERA=dsTopo_ERA['Z_GDS4_SFC'].values
 
     if (Src == 'ERAI'):
         # Read in ERA-I topography
-        dsTopo_ERA=xr.open_dataset( src_TopoFile )
-        phis_ERA=dsTopo_ERA['Z_GDS4_HYBL'].values
+        dsTopo_ERA=xr.open_dataset( Gv.src_TopoFile )
+        Gv.phis_ERA=dsTopo_ERA['Z_GDS4_HYBL'].values
 
     # ----------------------------------------------
     # Look for pre-computed weights file
@@ -198,35 +207,26 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
         read_weights = False 
 
 
-    """
-    elif ( (Src == 'ERAI') and (Dst == 'fv0.9x1.25') or (Dst=='fv1x1') ):
-        print(" READING PRECOMPUTED WEIGHTS FROM JERRY/PATRICK CODE !!!!!!!! " )
-        griddir = "/glade/work/juliob/ERA-I-grids/"
-        wgts_file_Con = griddir + "Swgt_SRC2DST.nc"
-        write_weights = False 
-        read_weights = True 
-    """
-
 
     # ----------------------------------------------
     #  Set-up regridding machinery
     # ----------------------------------------------
     # Scrip file for ERA5 created by ERA5scrip.ipynb
     if (Src == 'ERA5'):
-        dsERAscrip = xr.open_dataset( src_scrip )
-        area_ERA = -9999. #np.reshape( dsERAscrip['grid_area'].values , np.shape( phis_ERA ) )
+        dsERAscrip = xr.open_dataset( Gv.src_scrip )
+        Gv.area_ERA = -9999. #np.reshape( dsERAscrip['grid_area'].values , np.shape( phis_ERA ) )
     else:
-        area_ERA = -9999.
+        Gv.area_ERA = -9999.
         
     # ----------------------------------------------
     # Make object for ESMF regridding from SRC
     # grid to CAM target. Scrip files need to be provided even 
     # when a weight file is used
     # ----------------------------------------------
-    regrd, srcf, dstf = erg.Regrid( srcScrip = src_scrip , 
-                                    srcType  = src_type  ,
-                                    dstScrip = dst_scrip ,
-                                    dstType  = dst_type  ,
+    Gv.regrd, Gv.srcf, Gv.dstf = erg.Regrid( srcScrip = Gv.src_scrip , 
+                                    srcType  = Gv.src_type  ,
+                                    dstScrip = Gv.dst_scrip ,
+                                    dstType  = Gv.dst_type  ,
                                     write_weights = write_weights ,
                                     read_weights = read_weights ,
                                     weights_file = wgts_file_Con ,
@@ -234,17 +234,17 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     
 
 
-    vCAM=xr.open_dataset( dstVgridFile )
-    amid_CAM = vCAM['hyam'].values
-    bmid_CAM = vCAM['hybm'].values
-    aint_CAM = vCAM['hyai'].values
-    bint_CAM = vCAM['hybi'].values
+    vCAM=xr.open_dataset( Gv.dstVgridFile )
+    Gv.amid_CAM = vCAM['hyam'].values
+    Gv.bmid_CAM = vCAM['hybm'].values
+    Gv.aint_CAM = vCAM['hyai'].values
+    Gv.bint_CAM = vCAM['hybi'].values
 
-    print( f" Src scripfile {src_scrip} " )
-    print( f" Dst scripfile {dst_scrip} " )
-    print( f" Src topo file {src_TopoFile} " )
-    print( f" Dst topo file {dst_TopoFile} " )
-    print( f" {DstVgrid} Dst vertical grid from {dstVgridFile} " )
+    print( f" Src scripfile {Gv.src_scrip} " )
+    print( f" Dst scripfile {Gv.dst_scrip} " )
+    print( f" Src topo file {Gv.src_TopoFile} " )
+    print( f" Dst topo file {Gv.dst_TopoFile} " )
+    print( f" {DstVgrid} Dst vertical grid from {Gv.dstVgridFile} " )
 
 
     toc = time.perf_counter()
@@ -264,6 +264,7 @@ def load_file(path):
 
 def get_ERA5( year=2022, month=11, day=1, hour0=99):
 
+    """
     global pdTime_ERA
     global ps_ERA
     global te_ERA
@@ -274,10 +275,11 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     global amid_ERA, bmid_ERA, aint_ERA, bint_ERA
     # For diagnostic puroposes
     global lon_ERA, lat_ERA
+    """
 
     try:
-        MySrc
-        if ( MySrc != 'ERA5'):
+        Gv.MySrc
+        if ( Gv.MySrc != 'ERA5'):
             print( "You shouldnt be here - ABORT")
             rcode=-1
             return rcode
@@ -306,7 +308,7 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     era5dir = "/glade/collections/rda/data/ds633.6/e5.oper.an.ml/"
     wrkdir=era5dir+monStr+"/"
 
-    print(dstTZHkey)
+    print(Gv.dstTZHkey)
 
     #Define all file names for later use in dask function
     #-----------------------------------------------------
@@ -341,24 +343,24 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     dsW_ERA   = xr.open_mfdataset( wfile , data_vars='different', coords='different')
     """
 
-    ps_ERA = dsPS_ERA['SP'].values
-    te_ERA = dsT_ERA['T'].values
-    q_ERA  = dsQ_ERA['Q'].values
-    u_ERA  = dsU_ERA['U'].values
-    v_ERA  = dsV_ERA['V'].values
-    w_ERA  = dsW_ERA['W'].values
+    Gv.ps_ERA = dsPS_ERA['SP'].values
+    Gv.te_ERA = dsT_ERA['T'].values
+    Gv.q_ERA  = dsQ_ERA['Q'].values
+    Gv.u_ERA  = dsU_ERA['U'].values
+    Gv.v_ERA  = dsV_ERA['V'].values
+    Gv.w_ERA  = dsW_ERA['W'].values
 
-    lon_ERA = dsT_ERA['longitude'].values
-    lat_ERA = dsT_ERA['latitude'].values
+    Gv.lon_ERA = dsT_ERA['longitude'].values
+    Gv.lat_ERA = dsT_ERA['latitude'].values
     
     #---------------------------
     # Get shape of ERA data
     #-----------------------------
-    nt,nL,nx,ny = np.shape( te_ERA )
+    nt,nL,nx,ny = np.shape( Gv.te_ERA )
 
     #    Have a look at ERA global mean surface pressures
     for n in np.arange(nt):
-        globPS = np.sum( area_ERA*ps_ERA[n,:,:] ) / np.sum( area_ERA )
+        globPS = np.sum( Gv.area_ERA*Gv.ps_ERA[n,:,:] ) / np.sum( Gv.area_ERA )
         print( "ERA5 Global mean surface pressure=",globPS )
         
     #----------------------------------
@@ -376,17 +378,17 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     else:
         ymdhStr = ymdStr
     PdTime_ERA = pd.date_range( ymdhStr , periods=nt,freq='H')
-    pdTime_ERA = pd.to_datetime( PdTime_ERA.values )
+    Gv.pdTime_ERA = pd.to_datetime( PdTime_ERA.values )
     
 
     #-----------------------------------------------
     # Get hybrid eta-coordinate coefficients for ERA5
     #-----------------------------------------------
-    amid_ERA = dsT_ERA['a_model'].values 
-    bmid_ERA = dsT_ERA['b_model'].values
-    aint_ERA = dsT_ERA['a_half'].values 
-    bint_ERA = dsT_ERA['b_half'].values
-    print( "shape of a_model ", np.shape( amid_ERA ) ) 
+    Gv.amid_ERA = dsT_ERA['a_model'].values 
+    Gv.bmid_ERA = dsT_ERA['b_model'].values
+    Gv.aint_ERA = dsT_ERA['a_half'].values 
+    Gv.bint_ERA = dsT_ERA['b_half'].values
+    print( "shape of a_model ", np.shape( Gv.amid_ERA ) ) 
     
 
     toc = time.perf_counter()
@@ -516,41 +518,26 @@ def get_ERAI( year=2022, month=11, day=1, hour0=99, interactive=False ):
     # i.e., after reading in all the data to process
     rcode=1
 
-    if (interactive==True):
-        print( "Interactive !!!! " )
-        print( pdTime_ERA )
-        return pdTime_ERA, dsSC_ERA
-    else:
-        return rcode
+    return rcode
 
 def xRegrid( ExitAfterTemperature=False , 
              ExitAfterWinds=False , 
              HorzInterpLnPs=False , 
              Use_ps_ERA_xCAM_in_vert=True ):
 
-    # Variable created in this function and needed elsehwere in
-    # the module
-    #----------------------------------------------------------
-    global ps_CAM          
-    global phis_ERA_xCAM
-    global te_ERA_xzCAM
-    global q_ERA_xzCAM
-    global u_ERA_xzCAM
-    global v_ERA_xzCAM
-    global w_ERA_xzCAM
 
     StartTime = time.asctime( time.localtime(time.time()) )
     tic_overall = time.perf_counter()
-    print( f"starting xRegrid {MySrc} _x_ {MyDst} at {StartTime} ")
+    print( f"starting xRegrid {Gv.MySrc} _x_ {Gv.MyDst} at {StartTime} ")
     #-----------------------------------------
     # Horz remap of PHIS - No time dimension
     #-----------------------------------------
-    phis_ERA_xCAM = erg.HorzRG( aSrc = phis_ERA , 
-                                regrd = regrd , 
-                                srcField=srcf , 
-                                dstField=dstf , 
-                                srcGridkey=srcHkey ,
-                                dstGridkey=dstHkey )
+    Gv.phis_ERA_xCAM = erg.HorzRG( aSrc = Gv.phis_ERA , 
+                                regrd = Gv.regrd , 
+                                srcField=Gv.srcf , 
+                                dstField=Gv.dstf , 
+                                srcGridkey=Gv.srcHkey ,
+                                dstGridkey=Gv.dstHkey )
     
     toc_here = time.perf_counter()
     pTime = f"Finished phis Horz Rgrd  {toc_here - tic_overall:0.4f} seconds"
@@ -571,7 +558,7 @@ def xRegrid( ExitAfterTemperature=False ,
     #-----------------------------------------
     # Calculate difference between phis's
     #-----------------------------------------
-    Dphis = phis_ERA_xCAM - phis_CAM
+    Dphis = Gv.phis_ERA_xCAM - Gv.phis_CAM
     
         
     #-----------------------------------------
@@ -579,19 +566,19 @@ def xRegrid( ExitAfterTemperature=False ,
     # log-exp bit is to reproduce W&O
     #-----------------------------------------
     if (HorzInterpLnPs==True):
-        xfld_ERA = np.log( ps_ERA )
+        xfld_ERA = np.log( Gv.ps_ERA )
     else:
-        xfld_ERA = ps_ERA
+        xfld_ERA = Gv.ps_ERA
         
-    ps_ERA_xCAM    = erg.HorzRG( aSrc = xfld_ERA , 
-                                 regrd = regrd , 
-                                 srcField=srcf , 
-                                 dstField=dstf , 
-                                 srcGridkey=srcTHkey ,
-                                 dstGridkey=dstHkey )
+    Gv.ps_ERA_xCAM    = erg.HorzRG( aSrc = xfld_ERA , 
+                                 regrd = Gv.regrd , 
+                                 srcField=Gv.srcf , 
+                                 dstField=Gv.dstf , 
+                                 srcGridkey=Gv.srcTHkey ,
+                                 dstGridkey=Gv.dstHkey )
 
     if (HorzInterpLnPs==True):
-        ps_ERA_xCAM = np.exp( ps_ERA_xCAM ) 
+        Gv.ps_ERA_xCAM = np.exp( Gv.ps_ERA_xCAM ) 
 
     toc_here = time.perf_counter()
     pTime = f"Finished ps Horz Rgrd  {toc_here - tic_overall:0.4f} seconds"
@@ -600,24 +587,24 @@ def xRegrid( ExitAfterTemperature=False ,
     #-----------------------------------------
     # Make 3D prssure field on ERA ZH grid
     #-----------------------------------------
-    pmid_ERA, pint_ERA, delp_ERA \
-        = MkP.Pressure (am=amid_ERA ,
-                        bm=bmid_ERA ,
-                        ai=aint_ERA ,
-                        bi=bint_ERA ,
-                        ps=ps_ERA ,
-                        p_00=p_00_ERA ,
-                        Gridkey = srcTZHkey )
+    Gv.pmid_ERA, Gv.pint_ERA, Gv.delp_ERA \
+        = MkP.Pressure (am=Gv.amid_ERA ,
+                        bm=Gv.bmid_ERA ,
+                        ai=Gv.aint_ERA ,
+                        bi=Gv.bint_ERA ,
+                        ps=Gv.ps_ERA ,
+                        p_00=Gv.p_00_ERA ,
+                        Gridkey = Gv.srcTZHkey )
 
     #-----------------------------------------
     # Horz remap of temperature
     #-----------------------------------------
-    te_ERA_xCAM    = erg.HorzRG( aSrc = te_ERA , 
-                                 regrd = regrd , 
-                                 srcField=srcf , 
-                                 dstField=dstf , 
-                                 srcGridkey=srcTZHkey ,
-                                 dstGridkey= dstHkey )
+    Gv.te_ERA_xCAM    = erg.HorzRG( aSrc = Gv.te_ERA , 
+                                 regrd = Gv.regrd , 
+                                 srcField=Gv.srcf , 
+                                 dstField=Gv.dstf , 
+                                 srcGridkey=Gv.srcTZHkey ,
+                                 dstGridkey= Gv.dstHkey )
     
     toc_here = time.perf_counter()
     pTime = f"Finished te_ERA Horz Rgrd  {toc_here - tic_overall:0.4f} seconds"
@@ -630,22 +617,18 @@ def xRegrid( ExitAfterTemperature=False ,
     # to CAM horz grid (adapted from Isla's function)
     #-----------------------------------------------------------
     
-
-
-    print( "amid_ERA    ", np.shape( amid_ERA ) )
-    print( "ps_ERA_xCAM ", np.shape( ps_ERA_xCAM ) )
-    print( "te_ERA_xCAM ", np.shape( te_ERA_xCAM ) )
-
     tic_150 = time.perf_counter()
 
-    te_150, pmid_150,L150  = MkP.Pressure_TandP150 ( am=amid_ERA ,
-                                                     bm=bmid_ERA ,
-                                                     ai=aint_ERA ,
-                                                     bi=bint_ERA ,
-                                                     ps=ps_ERA_xCAM ,
-                                                     te=te_ERA_xCAM , 
-                                                     p_00=p_00_ERA , 
-                                                     Gridkey = dstTZHkey )
+    Gv.te_150, Gv.pmid_150, Gv.L150  =\
+                    MkP.Pressure_TandP150(
+                    am=Gv.amid_ERA ,
+                    bm=Gv.bmid_ERA ,
+                    ai=Gv.aint_ERA ,
+                    bi=Gv.bint_ERA ,
+                    ps=Gv.ps_ERA_xCAM ,
+                    te=Gv.te_ERA_xCAM , 
+                    p_00=Gv.p_00_ERA , 
+                    Gridkey = Gv.dstTZHkey )
 
 
     toc_150 = time.perf_counter()
@@ -663,46 +646,14 @@ def xRegrid( ExitAfterTemperature=False ,
     #-------------------------------------------------------------------
     
     
-    ps_CAM = vrg.PsAdjust( phis=phis_ERA_xCAM, 
-                           phis_CAM=phis_CAM, 
-                           ps=ps_ERA_xCAM , 
-                           pm150=pmid_150 , 
-                           te150=te_150 , 
-                           Gridkey=dstTZHkey  )
+    Gv.ps_CAM = vrg.PsAdjust( phis=Gv.phis_ERA_xCAM, 
+                            phis_CAM=Gv.phis_CAM, 
+                            ps= Gv.ps_ERA_xCAM , 
+                            pm150=Gv.pmid_150 , 
+                            te150=Gv.te_150 , 
+                            Gridkey=Gv.dstTZHkey  )
 
-    """
-    
-    gravit  = 9.80616           # acceleration of gravity ~ m/s^2
-    boltz   = 1.38065e-23       # boltzmann's constant ~ J/k/molecule
-    avogad  = 6.02214e26        # avogadro's number ~ molecules/kmole
-    mwdair  = 28.966            # molecular weight dry air ~ kg/kmole
-
-    rgas    = avogad*boltz      # universal gas constant ~ J/k/kmole
-    rdair   = rgas/mwdair       #constant for dry air   ~ J/k/kg
-
-    if (dstTZHkey == 'tzc'):
-        nt,nz,ncol = np.shape(te_ERA_xCAM)
-        L_bot = nz-1
-        te_bot = te_150 # te_ERA_xCAM[:,L_bot,:]
-        ps_CAM = np.zeros( (nt , ncol) )
-        for i in np.arange( nt ):
-            ps_CAM[i,:] = ps_ERA_xCAM[i,:] * np.exp( Dphis / (rdair*te_bot[i,:]) )
-
-    if (dstTZHkey == 'tzyx'):
-        nt,nz,ny,nx = np.shape(te_ERA_xCAM)
-        L_bot = nz-1
-        #te_bot = te_150 # te_ERA_xCAM[:,L_bot,:]
-        print( "using simpl TBOT fro ps_adj !!!!!! ")
-        te_bot = te_ERA_xCAM[:,L_bot,:]
-        ps_CAM = np.zeros( (nt , ny, nx) )
-        for i in np.arange( nt ):
-            ps_CAM[i,:,:] = ps_ERA_xCAM[i,:,:] * np.exp( Dphis / (Rdry*te_bot[i,:,:]) )
-    
-    
-    print( " RDAIR in w and O", rdair , " NZ here ",nz )
-    print( " RDry here ", Rdry  )
-    """
-    
+   
     #-----------------------------------------------------------------------------------------------
     # Now we creat full 4(3)D pressure fields on the ERA and CAM vertical grids. These are used for 
     # vertical interpolation below. Not clear what surface pressure to use when building ERA vertical
@@ -715,52 +666,52 @@ def xRegrid( ExitAfterTemperature=False ,
     # Surface pressure: Choose wisely
     #---------------------------------
     if (Use_ps_ERA_xCAM_in_vert == True):
-        ps_FLD = ps_ERA_xCAM
+        ps_FLD = Gv.ps_ERA_xCAM
     else:
-        ps_FLD = ps_CAM
+        ps_FLD = Gv.ps_CAM
         
-    pmid_CAM_zERA, pint_CAM_zERA, delp_CAM_zERA \
-        = MkP.Pressure (am=amid_ERA ,
-                        bm=bmid_ERA ,
-                        ai=aint_ERA ,
-                        bi=bint_ERA ,
+    Gv.pmid_CAM_zERA, Gv.pint_CAM_zERA, Gv.delp_CAM_zERA \
+        = MkP.Pressure (am=Gv.amid_ERA ,
+                        bm=Gv.bmid_ERA ,
+                        ai=Gv.aint_ERA ,
+                        bi=Gv.bint_ERA ,
                         ps=ps_FLD , # What to use here seems key: ps_CAM or ps_ERA_xCAM
-                        p_00=p_00_ERA ,
-                        Gridkey = dstTZHkey )
+                        p_00=Gv.p_00_ERA ,
+                        Gridkey = Gv.dstTZHkey )
 
-    pmid_CAM,pint_CAM,delp_CAM \
-        = MkP.Pressure (am=amid_CAM ,
-                        bm=bmid_CAM ,
-                        ai=aint_CAM ,
-                        bi=bint_CAM ,
-                        ps=ps_CAM ,
-                        p_00=p_00_CAM , 
-                        Gridkey = dstTZHkey )
+    Gv.pmid_CAM,Gv.pint_CAM,Gv.delp_CAM \
+        = MkP.Pressure (am=Gv.amid_CAM ,
+                        bm=Gv.bmid_CAM ,
+                        ai=Gv.aint_CAM ,
+                        bi=Gv.bint_CAM ,
+                        ps=Gv.ps_CAM ,
+                        p_00=Gv.p_00_CAM , 
+                        Gridkey = Gv.dstTZHkey )
 
     #-----------------------------------------------------------
     # Log-pressure is preferred for vertical interpolation
     # per Williamson&Olson
     #-----------------------------------------------------------
     p_00 = 100_000. # Here we just use the sensible value of p_00
-    lnpint_CAM = -7_000. * np.log( pint_CAM / p_00 )
-    lnpmid_CAM = -7_000. * np.log( pmid_CAM / p_00 )
-    lnpmid_CAM_zERA = -7_000. * np.log( pmid_CAM_zERA /p_00 )
+    lnpint_CAM = -7_000. * np.log( Gv.pint_CAM / p_00 )
+    lnpmid_CAM = -7_000. * np.log( Gv.pmid_CAM / p_00 )
+    lnpmid_CAM_zERA = -7_000. * np.log( Gv.pmid_CAM_zERA /p_00 )
 
     toc_P3D = time.perf_counter()
     pTime = f"Creating 3D P-fields etc., took   {toc_P3D - tic_P3D:0.4f} seconds"
     print(pTime)
     
     
-    if ( doWilliamsonOlson == True ):
+    if ( Gv.doWilliamsonOlson == True ):
         tic_WO = time.perf_counter()
         print( "WilliamsonOlson surface " )
         #----------------------------------------------------------
         # Calculate extrapolated surface temperature using 
         # Williamson & Olson standard lapse rate approach
         #----------------------------------------------------------
-        ts_extrap = vrg.TsExtrap( ps = ps_CAM ,
-                                  pm150 = pmid_150 ,
-                                  te150 = te_150 )
+        Gv.ts_extrap = vrg.TsExtrap( ps = Gv.ps_CAM ,
+                                  pm150 = Gv.pmid_150 ,
+                                  te150 = Gv.te_150 )
 
                               
         #--------------------------------------------------------
@@ -768,26 +719,26 @@ def xRegrid( ExitAfterTemperature=False ,
         # is selected then correct te_ERA_xzCAM between 
         # pmid_150 and ps_CAM
         #-------------------------------------------------------
-        te_WO  =    vrg.TeWO( te = te_ERA_xCAM ,
-                              pmid = pmid_CAM_zERA ,
-                              te150 = te_150 ,
-                              pm150 = pmid_150 ,
-                              ts = ts_extrap,
-                              ps = ps_CAM, 
-                              L150 = L150 ,
-                              Gridkey =dstTZHkey )
+        Gv.te_WO  =    vrg.TeWO( te = Gv.te_ERA_xCAM ,
+                              pmid = Gv.pmid_CAM_zERA ,
+                              te150 = Gv.te_150 ,
+                              pm150 = Gv.pmid_150 ,
+                              ts = Gv.ts_extrap,
+                              ps = Gv.ps_CAM, 
+                              L150 = Gv.L150 ,
+                              Gridkey = Gv.dstTZHkey )
 
-        te_ERA_xCAM = copy.deepcopy( te_WO )
+        Gv.te_ERA_xCAM = copy.deepcopy( Gv.te_WO )
         toc_WO = time.perf_counter()
         pTime = f"Williamson Olson surface took  {toc_WO - tic_WO:0.4f} seconds"
         print(pTime)                       
     
 
     print(" going into vertical regrid of T " )
-    te_ERA_xzCAM = vrg.VertRG( a_x  = te_ERA_xCAM ,
+    Gv.te_ERA_xzCAM = vrg.VertRG( a_x  = Gv.te_ERA_xCAM ,
                                zSrc = lnpmid_CAM_zERA ,
                                zDst = lnpmid_CAM ,
-                               Gridkey =dstTZHkey ,
+                               Gridkey =Gv.dstTZHkey ,
                                kind = 'quadratic' ) #linea
     
 
@@ -795,12 +746,7 @@ def xRegrid( ExitAfterTemperature=False ,
     # return statement to assist in debugging and analysis
     #-------------------------------------------------------------
     if ( ExitAfterTemperature == True ):
-        return pmid_ERA, lat_ERA, lon_ERA, te_ERA, \
-            pmid_CAM_zERA, lat_CAM, lon_CAM, te_ERA_xCAM, \
-            pmid_CAM, te_ERA_xzCAM, \
-            ps_ERA, ps_CAM, ps_ERA_xCAM, \
-            phis_ERA, phis_CAM, phis_ERA_xCAM
-
+        return
 
 
     #-------------------------------------------------------------
@@ -811,9 +757,10 @@ def xRegrid( ExitAfterTemperature=False ,
     #  Regridding of Q
     #---------------------
     print(" going into horz+vertical regrid of Q " )
-    q_ERA_xzCAM , q_ERA_xCAM = fullRegrid ( a_ERA = q_ERA ,
-                                            zSrc = lnpmid_CAM_zERA ,
-                                            zDst = lnpmid_CAM )
+    Gv.q_ERA_xzCAM , Gv.q_ERA_xCAM =\
+                        fullRegrid( a_ERA = Gv.q_ERA ,
+                                    zSrc = lnpmid_CAM_zERA ,
+                                    zDst = lnpmid_CAM )
         
     q_ERA_xzCAM = vrg.BottomFill( a_zCAM = q_ERA_xzCAM ,
                                   a_zERA = q_ERA_xCAM ,
