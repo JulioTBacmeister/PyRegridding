@@ -90,6 +90,7 @@ class VariableContainer:
         self.v_ERA_xzCAM = None
         self.w_ERA_xzCAM = None
 
+        self.te_ERA_xCAM_00 = None
         self.te_ERA_xCAM = None
         self.q_ERA_xCAM = None
         self.u_ERA_xCAM = None

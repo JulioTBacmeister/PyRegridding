@@ -3,14 +3,13 @@
 import sys
 import argparse as arg
 
+import GlobalVarClass
+from GlobalVarClass import Gv
+
+
 import xarray as xr
 import numpy as np
 import pandas as pd
-
-from scipy.io import FortranFile
-from scipy import interpolate as intr
-from scipy.interpolate import RegularGridInterpolator as RGi
-
 
 import ESMF as E
 
@@ -22,20 +21,10 @@ import time
 import scripGen as SG
 import esmfRegrid as erg
 
-#import cfgrib
-
-
-import dask
-import dask.array as da
-
-import GlobalVarClass
-from GlobalVarClass import Gv
 
 # "ChatGPI version" --- 
 import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
-
-import FVStagger as FV
 
 # import modules in other directories
 sys.path.append('../Utils/')
@@ -81,447 +70,7 @@ Rdry = Con.Rdry() #
 #      te_ERA_xzCAM ==> ERA temperature remapped horizontally to the CAM horizontal grid 
 #                       and then also vertically interpoated to the CAM vertical grid
 #-------------------------------------------------------------
-
-def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMethod="CONSERVE" ):
-    #---------------------------------------------
-    # This function sets-up variables and objects 
-    # that are need for horizontal and vertical 
-    # regridding of ERA reanalyses.
-    #---------------------------------------------
-
-    """
-    global MyDst, MyDstVgrid, MySrc
-    global regrd,srcf,dstf
-    global phis_CAM, phis_ERA
-    global amid_CAM,bmid_CAM,aint_CAM,bint_CAM
-    global lon_CAM,lat_CAM,area_CAM
-    global area_ERA
-
-    # Grid keys for remapping
-    global srcHkey,dstHkey,srcTHkey,dstTHkey,srcZHkey,dstZHkey,srcTZHkey,dstTZHkey
-
-    global doWilliamsonOlson
-
-    global p_00_ERA, p_00_CAM
-    """
-    
-    #------- 
-    # Begin
-    #-------
-    
-    
-    tic_overall = time.perf_counter()
-    Gv.MyDst,Gv.MyDstVgrid,Gv.MySrc = Dst,DstVgrid,Src
-
-    Gv.doWilliamsonOlson = WOsrf
-    Gv.p_00_CAM = 100_000.
-
-    print( f"In prep Src= {Src} to Dst={Dst} " )
-    if (Dst == 'ne30pg3'):
-        Gv.dstHkey = 'c'
-        Gv.dst_type='mesh'
-        Gv.dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/ne30pg3_scrip_170611.nc'
-        Gv.dst_TopoFile = '/glade/p/cgd/amp/juliob/bndtopo/latest/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
-
-    if ((Dst == 'fv0.9x1.25') or (Dst=='fv1x1')):
-        Gv.dstHkey = 'yx'
-        Gv.dst_type='grid'
-        Gv.dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/fv0.9x1.25_141008.nc'
-        #dst_TopoFile='/glade/p/cgd/amp/juliob/bndtopo/latest/fv_0.9x1.25_gmted2010_modis_bedmachine_nc3000_Laplace0100_20220708.nc'
-        Gv.dst_TopoFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
-
-    if (Src == 'ERA5'):
-        Gv.srcHkey = 'yx'
-        Gv.src_type='grid'
-        Gv.src_scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_640x1280_scrip.nc'
-        Gv.src_TopoFile = '/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
-        Gv.p_00_ERA = 1.0
-
-    if (Src == 'ERAI'):
-        Gv.srcHkey = 'yx'
-        Gv.src_type='grid'
-        Gv.src_scrip = '/glade/work/juliob/ERA-I-grids/ERAI_256x512_scrip.nc'
-        Gv.src_TopoFile = '/glade/scratch/juliob/erai_2017/ei.oper.an.ml.regn128sc.2017010100.nc'
-        Gv.p_00_ERA = 100_000.
-
-    # ----------------------------------------------
-    # Get DST vertical grid from a file.
-    # These should be small files but 
-    # they aren't always.
-    # ----------------------------------------------
-    if (DstVgrid == 'L58' ):
-        # Read in CAM L58 vertical grid
-        Gv.dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
-
-    if (DstVgrid == 'L32' ):
-        Gv.dstVgridFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/inic/se/f.e22.FC2010climo.ne30pg3_ne30pg3_mg17.cam6_2_022.002.cam.i.0020-01-01-00000_c200610.nc'
-
-    # Set grid keys for Src ERA5 reanalysis
-    Gv.srcTHkey  = 't'  + Gv.srcHkey
-    Gv.srcZHkey  = 'z'  + Gv.srcHkey
-    Gv.srcTZHkey = 'tz' + Gv.srcHkey
-
-    # Set grid keys for Dst CAM-SE
-    Gv.dstTHkey  = 't'  + Gv.dstHkey
-    Gv.dstZHkey  = 'z'  + Gv.dstHkey
-    Gv.dstTZHkey = 'tz' + Gv.dstHkey
- 
-    # ----------------------------------------------
-    # Get all topo data we will use
-    # Read in CAM topography. Also get
-    # lon and lat and area for CAM (Dst)
-    # grid.
-    # ----------------------------------------------
-    dsTopo_CAM=xr.open_dataset( Gv.dst_TopoFile )
-    varsCAM  = list( dsTopo_CAM.variables )
-    Gv.phis_CAM = dsTopo_CAM['PHIS'].values
-    Gv.lon_CAM  = dsTopo_CAM['lon'].values
-    Gv.lat_CAM  = dsTopo_CAM['lat'].values
-    if ('area' in varsCAM):
-        Gv.area_CAM = dsTopo_CAM['area'].values
-    else:
-        Gv.area_CAM = GrU.area2d( lon=Gv.lon_CAM, lat=Gv.lat_CAM )
-
-    if (Src == 'ERA5'):
-        # Read in ERA5 topography
-        dsTopo_ERA=xr.open_dataset( Gv.src_TopoFile )
-        Gv.phis_ERA=dsTopo_ERA['Z_GDS4_SFC'].values
-
-    if (Src == 'ERAI'):
-        # Read in ERA-I topography
-        dsTopo_ERA=xr.open_dataset( Gv.src_TopoFile )
-        Gv.phis_ERA=dsTopo_ERA['Z_GDS4_HYBL'].values
-
-    # ----------------------------------------------
-    # Look for pre-computed weights file
-    # If none, set params to create weights file
-    # ----------------------------------------------
-    if ( (Src == 'ERA5') and (Dst == 'ne30pg3') ):
-        griddir = "/glade/work/juliob/ERA5-proc/ERA5interp/grids/"
-        wgts_file_Con = griddir + "ERA5_ne30pg3_Conserv_wgts.nc"
-        write_weights = False 
-        read_weights = True 
-    else:
-        wgts_file_Con = "REGRID_"+Src+"_x_"+Dst+"_"+RegridMethod+".nc"
-        write_weights = False 
-        read_weights = False 
-
-
-
-    # ----------------------------------------------
-    #  Set-up regridding machinery
-    # ----------------------------------------------
-    # Scrip file for ERA5 created by ERA5scrip.ipynb
-    if (Src == 'ERA5'):
-        dsERAscrip = xr.open_dataset( Gv.src_scrip )
-        Gv.area_ERA = -9999. #np.reshape( dsERAscrip['grid_area'].values , np.shape( phis_ERA ) )
-    else:
-        Gv.area_ERA = -9999.
-        
-    # ----------------------------------------------
-    # Make object for ESMF regridding from SRC
-    # grid to CAM target. Scrip files need to be provided even 
-    # when a weight file is used
-    # ----------------------------------------------
-    Gv.regrd, Gv.srcf, Gv.dstf = erg.Regrid( srcScrip = Gv.src_scrip , 
-                                    srcType  = Gv.src_type  ,
-                                    dstScrip = Gv.dst_scrip ,
-                                    dstType  = Gv.dst_type  ,
-                                    write_weights = write_weights ,
-                                    read_weights = read_weights ,
-                                    weights_file = wgts_file_Con ,
-                                    RegridMethod = RegridMethod )
-    
-
-
-    vCAM=xr.open_dataset( Gv.dstVgridFile )
-    Gv.amid_CAM = vCAM['hyam'].values
-    Gv.bmid_CAM = vCAM['hybm'].values
-    Gv.aint_CAM = vCAM['hyai'].values
-    Gv.bint_CAM = vCAM['hybi'].values
-
-    print( f" Src scripfile {Gv.src_scrip} " )
-    print( f" Dst scripfile {Gv.dst_scrip} " )
-    print( f" Src topo file {Gv.src_TopoFile} " )
-    print( f" Dst topo file {Gv.dst_TopoFile} " )
-    print( f" {DstVgrid} Dst vertical grid from {Gv.dstVgridFile} " )
-
-
-    toc = time.perf_counter()
-    pTime = f"Prepping for {Src} to {Dst} proc in {__name__} took  {toc - tic_overall:0.4f} seconds"
-    print(pTime)
- 
-    code = 1
-    return code
-
-
-# Define a function that loads a NetCDF file and returns an xarray dataset
-@dask.delayed
-def load_file(path):
-    ds = xr.open_mfdataset(path ,  data_vars='different', coords='different' )
-    return ds
-
-
-def get_ERA5( year=2022, month=11, day=1, hour0=99):
-
-    """
-    global pdTime_ERA
-    global ps_ERA
-    global te_ERA
-    global q_ERA
-    global u_ERA
-    global v_ERA
-    global w_ERA
-    global amid_ERA, bmid_ERA, aint_ERA, bint_ERA
-    # For diagnostic puroposes
-    global lon_ERA, lat_ERA
-    """
-
-    try:
-        Gv.MySrc
-        if ( Gv.MySrc != 'ERA5'):
-            print( "You shouldnt be here - ABORT")
-            rcode=-1
-            return rcode
-    except NameError:
-        print( 'go on ' )
-
-    tic_overall = time.perf_counter()
-
-    monStr=str( year ).zfill(4)+str(month).zfill(2)
-    # CAM history style yyyy-mm-dd string
-    ymdStr=str( year ).zfill(4) + '-' + str(month).zfill(2) + '-' + str(day).zfill(2)
-
-    if ( hour0 != 99 ):
-        hour1=hour0+5
-        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour0).zfill(2)
-        ymdh1=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour1).zfill(2)
-        ymdh=ymdh0+'_'+ymdh1
-    else:
-        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+"*"
-        ymdh=ymdh0
-        
-    print( "Time tags for ERA5 files ...")
-    print(monStr)
-    print(ymdh) 
-
-    era5dir = "/glade/collections/rda/data/ds633.6/e5.oper.an.ml/"
-    wrkdir=era5dir+monStr+"/"
-
-    print(Gv.dstTZHkey)
-
-    #Define all file names for later use in dask function
-    #-----------------------------------------------------
-    spfile= wrkdir + 'e5.oper.an.ml.128_134_sp.regn320sc.'+ymdh+'.nc'
-    tfile = wrkdir + 'e5.oper.an.ml.0_5_0_0_0_t.regn320sc.'+ymdh+'.nc'
-    qfile = wrkdir + 'e5.oper.an.ml.0_5_0_1_0_q.regn320sc.'+ymdh+'.nc'
-    ufile = wrkdir + 'e5.oper.an.ml.0_5_0_2_2_u.regn320uv.'+ymdh+'.nc'
-    vfile = wrkdir + 'e5.oper.an.ml.0_5_0_2_3_v.regn320uv.'+ymdh+'.nc'
-    wfile = wrkdir + 'e5.oper.an.ml.0_5_0_2_8_w.regn320sc.'+ymdh+'.nc'
-    all_ERA_files = [ spfile , tfile, qfile, ufile, vfile, wfile ]
-
-    print( "Using DASK " )
-    # Create a list of delayed objects, one for each file
-    delayed_datasets = [load_file(path) for path in  all_ERA_files  ]
-    # Use dask.compute to load all of the datasets in parallel
-    datasets  = dask.compute(*delayed_datasets)
-    dsPS_ERA  = datasets[0] 
-    dsT_ERA   = datasets[1] 
-    dsQ_ERA   = datasets[2] 
-    dsU_ERA   = datasets[3] 
-    dsV_ERA   = datasets[4] 
-    dsW_ERA   = datasets[5] 
-
-    """
-    #Serial read
-    #--------------
-    dsPS_ERA  = xr.open_mfdataset( spfile, data_vars='different', coords='different' )
-    dsT_ERA   = xr.open_mfdataset( tfile , data_vars='different', coords='different')
-    dsQ_ERA   = xr.open_mfdataset( qfile,  data_vars='different', coords='different' )
-    dsU_ERA   = xr.open_mfdataset( ufile , data_vars='different', coords='different')
-    dsV_ERA   = xr.open_mfdataset( vfile , data_vars='different', coords='different')
-    dsW_ERA   = xr.open_mfdataset( wfile , data_vars='different', coords='different')
-    """
-
-    Gv.ps_ERA = dsPS_ERA['SP'].values
-    Gv.te_ERA = dsT_ERA['T'].values
-    Gv.q_ERA  = dsQ_ERA['Q'].values
-    Gv.u_ERA  = dsU_ERA['U'].values
-    Gv.v_ERA  = dsV_ERA['V'].values
-    Gv.w_ERA  = dsW_ERA['W'].values
-
-    Gv.lon_ERA = dsT_ERA['longitude'].values
-    Gv.lat_ERA = dsT_ERA['latitude'].values
-    
-    #---------------------------
-    # Get shape of ERA data
-    #-----------------------------
-    nt,nL,nx,ny = np.shape( Gv.te_ERA )
-
-    #    Have a look at ERA global mean surface pressures
-    for n in np.arange(nt):
-        globPS = np.sum( Gv.area_ERA*Gv.ps_ERA[n,:,:] ) / np.sum( Gv.area_ERA )
-        print( "ERA5 Global mean surface pressure=",globPS )
-        
-    #----------------------------------
-    # Create a time array from on of
-    # the ERA datasets
-    #----------------------------------
-    #pdTime_ERA = pd.to_datetime( dsT_ERA['time'].values )
-    
-    # Better/COnsistent to create time/date variables
-    # For ERA5 let's add hour to ymdStr if hour0 != 99
-    # Pandas understands space as delimiter between day
-    # and hour
-    if ( hour0 != 99 ):
-        ymdhStr = ymdStr + ' ' + str( hour0 ).zfill(2)
-    else:
-        ymdhStr = ymdStr
-    PdTime_ERA = pd.date_range( ymdhStr , periods=nt,freq='H')
-    Gv.pdTime_ERA = pd.to_datetime( PdTime_ERA.values )
-    
-
-    #-----------------------------------------------
-    # Get hybrid eta-coordinate coefficients for ERA5
-    #-----------------------------------------------
-    Gv.amid_ERA = dsT_ERA['a_model'].values 
-    Gv.bmid_ERA = dsT_ERA['b_model'].values
-    Gv.aint_ERA = dsT_ERA['a_half'].values 
-    Gv.bint_ERA = dsT_ERA['b_half'].values
-    print( "shape of a_model ", np.shape( Gv.amid_ERA ) ) 
-    
-
-    toc = time.perf_counter()
-    pTime = f"Reading one set of ERA5 vars took  {toc - tic_overall:0.4f} seconds"
-    print(pTime)
-
-    # To make this code general there should be a split here,
-    # i.e., after reading in all the data to process
-    rcode=1
-    return rcode
-
-
-def get_ERAI( year=2022, month=11, day=1, hour0=99, interactive=False ):
-
-    global pdTime_ERA
-    global ps_ERA
-    global te_ERA
-    global q_ERA
-    global u_ERA
-    global v_ERA
-    global w_ERA
-    global amid_ERA, bmid_ERA, aint_ERA, bint_ERA
-    # For diagnostic puroposes
-    global lon_ERA, lat_ERA
-
-    try:
-        MySrc
-        if ( MySrc != 'ERAI'):
-            print( "You shouldnt be here - ABORT")
-            rcode=-1
-            return rcode
-    except NameError:
-        print( 'go on ' )
-
-    tic_overall = time.perf_counter()
-
-    # ERA style month string - yyyymm
-    monStr=str( year ).zfill(4)+str(month).zfill(2)
-    # CAM history style yyyy-mm-dd string
-    ymdStr=str( year ).zfill(4) + '-' + str(month).zfill(2) + '-' + str(day).zfill(2)
-    
-    if ( hour0 != 99 ):
-        hour1=hour0+5
-        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour0).zfill(2)
-        ymdh1=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour1).zfill(2)
-        ymdh=ymdh0  
-    else:
-        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+"*"
-        ymdh=ymdh0
-        
-    print( "Time tags for ERAI files ...")
-    print(monStr)
-    print(ymdh) 
-
-    #wrkdir=  '/glade/scratch/juliob/erai_2017/' 
-    wrkdir=  '/glade/scratch/juliob/erai_'+ str( year ).zfill(4) +'/' 
-
-    #print(dstTZHkey)
-
-    #Define all file names for later use in dask function
-    #-----------------------------------------------------
-    scfile = wrkdir + 'ei.oper.an.ml.regn128sc.'+ymdh+'.nc'
-    uvfile = wrkdir + 'ei.oper.an.ml.regn128uv.'+ymdh+'.nc'
-    
-    print(scfile)
-    print(uvfile)
-    #Serial read
-    #--------------
-    dsSC_ERA   = xr.open_mfdataset( scfile, combine='nested',concat_dim=['time'], data_vars='different', coords='different' ) 
-    dsUV_ERA   = xr.open_mfdataset( uvfile ,combine='nested',concat_dim=['time'], data_vars='different', coords='different' ) #data_vars='different', coords='different')
-
-    ps_ERA = np.exp( dsSC_ERA['LNSP_GDS4_HYBL'].values )
-    te_ERA = dsSC_ERA['T_GDS4_HYBL' ].values
-    q_ERA  = dsSC_ERA['Q_GDS4_HYBL' ].values
-    w_ERA  = dsSC_ERA['W_GDS4_HYBL' ].values
-    u_ERA  = dsUV_ERA['U_GDS4_HYBL'].values
-    v_ERA  = dsUV_ERA['V_GDS4_HYBL'].values
-        
-    lat_ERA = dsSC_ERA['g4_lat_0'].values
-    lon_ERA = dsSC_ERA['g4_lon_1'].values
-
-    print( " Checking ERA-i data ")
-    print( " U-shape: ", np.shape(u_ERA) )
-    print( " V-shape: ", np.shape(v_ERA) )
-    print( " T-shape: ", np.shape(te_ERA) )
-    print( " Q-shape: ", np.shape(q_ERA) )
-
-    #---------------------------
-    # Get shape of ERA data
-    #-----------------------------
-    nt,nL,nx,ny = np.shape( te_ERA )
-
-    """
-    #    Have a look at ERA global mean surface pressures
-    #    Need to get an area for ERA-I grid.
-    for n in np.arange(nt):
-        globPS = np.sum( area_ERA*ps_ERA[n,:,:] ) / np.sum( area_ERA )
-        print( "ERA5 Global mean surface pressure=",globPS )
-    """
-
-    #----------------------------------
-    # Create a time array from on of
-    # the ERA datasets
-    #----------------------------------
-    
-    PdTime_ERA = pd.date_range( ymdStr , periods=nt,freq='6H')
-    pdTime_ERA = pd.to_datetime( PdTime_ERA.values )
-    #-----------------------------------------------
-    # Get hybrid eta-coordinate coefficients for ERAI
-    # Why do they have different names for
-    # these in the 'uv' and 'sc' files????
-    #-----------------------------------------------
-    amid_ERA = dsSC_ERA['lv_HYBL2_a'].values 
-    bmid_ERA = dsSC_ERA['lv_HYBL2_b'].values
-    aint_ERA = dsSC_ERA['lv_HYBL_i3_a'].values 
-    bint_ERA = dsSC_ERA['lv_HYBL_i3_b'].values
-    print( "shape of hybrid a in ERAI ", np.shape( amid_ERA ) ) 
-
-
-
-
-    toc = time.perf_counter()
-    pTime = f"Reading one set of ERA5 vars took  {toc - tic_overall:0.4f} seconds"
-    print(pTime)
-
-    # To make this code general there should be a split here,
-    # i.e., after reading in all the data to process
-    rcode=1
-
-    return rcode
-
 def xRegrid( ExitAfterTemperature=False , 
-             ExitAfterWinds=False , 
              HorzInterpLnPs=False , 
              Use_ps_ERA_xCAM_in_vert=True ):
 
@@ -606,6 +155,10 @@ def xRegrid( ExitAfterTemperature=False ,
                                  srcGridkey=Gv.srcTZHkey ,
                                  dstGridkey= Gv.dstHkey )
     
+    # Save off a copy of te before any funny business 
+    # happens, e.g., Williamson&Olson
+    #------------------------------------------------
+    Gv.te_ERA_xCAM_00 = copy.deepcopy( Gv.te_ERA_xCAM  )
     toc_here = time.perf_counter()
     pTime = f"Finished te_ERA Horz Rgrd  {toc_here - tic_overall:0.4f} seconds"
     print(pTime)
@@ -762,18 +315,18 @@ def xRegrid( ExitAfterTemperature=False ,
                                     zSrc = lnpmid_CAM_zERA ,
                                     zDst = lnpmid_CAM )
         
-    q_ERA_xzCAM = vrg.BottomFill( a_zCAM = q_ERA_xzCAM ,
-                                  a_zERA = q_ERA_xCAM ,
-                                  pmid_zCAM=pmid_CAM ,
-                                  ps_ERA = ps_ERA_xCAM , 
-                                  Gridkey = dstTZHkey )
+    Gv.q_ERA_xzCAM = vrg.BottomFill( a_zCAM = Gv.q_ERA_xzCAM ,
+                                  a_zERA = Gv.q_ERA_xCAM ,
+                                  pmid_zCAM=Gv.pmid_CAM ,
+                                  ps_ERA = Gv.ps_ERA_xCAM , 
+                                  Gridkey = Gv.dstTZHkey )
 
-    qx = SaturateQ( q=q_ERA_xzCAM , 
-                    te=te_ERA_xzCAM ,
-                    p=pmid_CAM, 
-                    Gridkey = dstTZHkey )
+    qx = SaturateQ( q=Gv.q_ERA_xzCAM , 
+                    te=Gv.te_ERA_xzCAM ,
+                    p=Gv.pmid_CAM, 
+                    Gridkey = Gv.dstTZHkey )
     
-    q_ERA_xzCAM =  copy.deepcopy(qx)
+    Gv.q_ERA_xzCAM =  copy.deepcopy(qx)
 
 
 
@@ -782,60 +335,44 @@ def xRegrid( ExitAfterTemperature=False ,
     #  Regridding of U
     #---------------------
     print(" going into horz+vertical regrid of U " )
-    u_ERA_xzCAM, u_ERA_xCAM = fullRegrid ( a_ERA = u_ERA ,
+    Gv.u_ERA_xzCAM, Gv.u_ERA_xCAM = fullRegrid ( a_ERA = Gv.u_ERA ,
                                            zSrc = lnpmid_CAM_zERA ,
                                            zDst = lnpmid_CAM )
 
-    u_ERA_xzCAM = vrg.BottomFill( a_zCAM = u_ERA_xzCAM ,
-                                  a_zERA = u_ERA_xCAM ,
-                                  pmid_zCAM=pmid_CAM ,
-                                  ps_ERA = ps_ERA_xCAM , 
-                                  Gridkey = dstTZHkey )
+    Gv.u_ERA_xzCAM = vrg.BottomFill( a_zCAM = Gv.u_ERA_xzCAM ,
+                                  a_zERA = Gv.u_ERA_xCAM ,
+                                  pmid_zCAM=Gv.pmid_CAM ,
+                                  ps_ERA = Gv.ps_ERA_xCAM , 
+                                  Gridkey = Gv.dstTZHkey )
     
     #--------------------
     #  Regridding of V
     #---------------------
     print(" going into horz+vertical regrid of V " )
-    v_ERA_xzCAM, v_ERA_xCAM = fullRegrid ( a_ERA = v_ERA ,
+    Gv.v_ERA_xzCAM, Gv.v_ERA_xCAM = fullRegrid ( a_ERA = Gv.v_ERA ,
                                            zSrc = lnpmid_CAM_zERA ,
                                            zDst = lnpmid_CAM )
 
-    v_ERA_xzCAM = vrg.BottomFill( a_zCAM = v_ERA_xzCAM ,
-                                  a_zERA = v_ERA_xCAM ,
-                                  pmid_zCAM=pmid_CAM ,
-                                  ps_ERA = ps_ERA_xCAM , 
-                                  Gridkey = dstTZHkey )
+    Gv.v_ERA_xzCAM = vrg.BottomFill( a_zCAM = Gv.v_ERA_xzCAM ,
+                                  a_zERA = Gv.v_ERA_xCAM ,
+                                  pmid_zCAM=Gv.pmid_CAM ,
+                                  ps_ERA = Gv.ps_ERA_xCAM , 
+                                  Gridkey = Gv.dstTZHkey )
     
     #--------------------
     #  Regridding of W
     #---------------------
     print(" going into horz+vertical regrid of W " )
-    w_ERA_xzCAM, w_ERA_xCAM = fullRegrid ( a_ERA = w_ERA ,
+    Gv.w_ERA_xzCAM, Gv.w_ERA_xCAM = fullRegrid ( a_ERA = Gv.w_ERA ,
                                           zSrc = lnpmid_CAM_zERA ,
                                           zDst = lnpmid_CAM )
 
-    w_ERA_xzCAM = vrg.BottomFill( a_zCAM = w_ERA_xzCAM ,
-                                  a_zERA = w_ERA_xCAM ,
-                                  pmid_zCAM=pmid_CAM ,
-                                  ps_ERA = ps_ERA_xCAM , 
-                                  Gridkey = dstTZHkey )
+    Gv.w_ERA_xzCAM = vrg.BottomFill( a_zCAM = Gv.w_ERA_xzCAM ,
+                                  a_zERA = Gv.w_ERA_xCAM ,
+                                  pmid_zCAM=Gv.pmid_CAM ,
+                                  ps_ERA = Gv.ps_ERA_xCAM , 
+                                  Gridkey = Gv.dstTZHkey )
     
-
-
-
-
-
-    #-------------------------------------------------------------
-    # return statement to assist in debugging and analysis
-    #-------------------------------------------------------------
-    if ( ExitAfterWinds == True ):
-        return pmid_ERA, lat_ERA, lon_ERA, u_ERA, \
-            pmid_CAM_zERA, lat_CAM, lon_CAM, u_ERA_xCAM, \
-            pmid_CAM, u_ERA_xzCAM, \
-            ps_ERA, ps_CAM, ps_ERA_xCAM, \
-            phis_ERA, phis_CAM, phis_ERA_xCAM
-
-
 
     
     toc = time.perf_counter()
@@ -849,17 +386,17 @@ def fullRegrid( a_ERA,  zSrc ,  zDst , kind='linear', ReturnVars=2 ):
     
     print("Horz RG in fullRegrid " )
     a_ERA_xCAM    = erg.HorzRG( aSrc = a_ERA , 
-                                 regrd = regrd , 
-                                 srcField=srcf , 
-                                 dstField=dstf , 
-                                 srcGridkey=srcTZHkey,
-                                 dstGridkey=dstHkey )
+                                 regrd = Gv.regrd , 
+                                 srcField=Gv.srcf , 
+                                 dstField=Gv.dstf , 
+                                 srcGridkey=Gv.srcTZHkey,
+                                 dstGridkey=Gv.dstHkey )
 
     print("Vert RG in fullRegrid " )
     a_ERA_xzCAM = vrg.VertRG( a_x  = a_ERA_xCAM ,
                               zSrc = zSrc ,
                               zDst = zDst ,
-                              Gridkey=dstTZHkey,
+                              Gridkey=Gv.dstTZHkey,
                               kind = kind )
 
     if (ReturnVars==1):
@@ -887,266 +424,3 @@ def SaturateQ ( q , te , p, Gridkey ):
     
     return qx
 
-def write_netcdf( version='' ):
-    ntime = np.shape(pdTime_ERA)[0]
-    print(ntime)
-    Bfilo="/glade/scratch/juliob/" + MySrc +"_x_"+ MyDst + "_"+ MyDstVgrid + "_" + version #  + "."     #  + timetag+ ".nc"
-
-    if (doWilliamsonOlson==True):
-        Bfilo = Bfilo + '_WO'
-
-    ilev = (aint_CAM+bint_CAM)* 1_000. #* 100_000.
-    lev  = (amid_CAM+bmid_CAM)* 1_000. #* 100_000.
-
-
-
-    if (dstTZHkey == 'tzc' ):
-        nt,nz,ncol = np.shape( te_ERA_xzCAM )
-        for itim in np.arange( ntime ):
-            dims   = ["ncol","time","lev","ilev"]
-            coords = dict( 
-                lon  = ( ["ncol"],lon_CAM ),
-                lat  = ( ["ncol"],lat_CAM ),
-                lev  = ( ["lev"],lev),
-                ilev = ( ["ilev"],ilev),
-                time = ( ["time"],  np.array(itim ,ndmin=1 ) ), #pd.to_datetime( pdTime_ERA[itim] ) ),
-            )
-        
-            Wds = xr.Dataset( coords=coords  )
-            Wds["TimeStamp"] = pd.to_datetime( pdTime_ERA[itim] )
-            Wds["P_00"] = 100_000.
-        
-            Dar = xr.DataArray( data=aint_CAM, dims=('ilev',),
-                                attrs=dict( description='interface hybrid eta coordinate A-coeff ',units='1',) ,) 
-            Wds['hyai'] = Dar
-
-            Dar = xr.DataArray( data=bint_CAM, dims=('ilev',),
-                                attrs=dict( description='interface hybrid eta coordinate B-coeff ',units='1',) ,) 
-            Wds['hybi'] = Dar
-
-            Dar = xr.DataArray( data=amid_CAM, dims=('lev',),
-                                attrs=dict( description='mid-level hybrid eta coordinate A-coeff ',units='1',) ,) 
-            Wds['hyam'] = Dar
-
-            Dar = xr.DataArray( data=bmid_CAM, dims=('lev',),
-                                attrs=dict( description='mid-level hybrid eta coordinate B-coeff ',units='1',) ,) 
-            Wds['hybm'] = Dar
-        
-            Dar = xr.DataArray( data=area_CAM, dims=('ncol',),
-                                attrs=dict( description='Cell area',units='Steradians',) ,) 
-            Wds['area'] = Dar
-
-            Dar = xr.DataArray( data=phis_CAM, dims=('ncol',),
-                                attrs=dict( description='Surface Geopotential Height',units='m+2 s-2',) ,) 
-            Wds['PHIS'] = Dar
-
-            Dar = xr.DataArray( data=phis_ERA_xCAM, dims=('ncol',),
-                                attrs=dict( description='ERA Surface Geopotential Height',units='m+2 s-2',) ,) 
-            Wds['PHIS_ERA'] = Dar
-
-            Dar = xr.DataArray( data=ps_CAM[itim,:].reshape(1,ncol), 
-                                dims=('time','ncol',),
-                                attrs=dict( description='Surface Pressure',units='Pa',) ,) 
-            Wds['PS'] = Dar
-    
-            Dar = xr.DataArray( data=te_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
-                                dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['T'] = Dar
-
-            Dar = xr.DataArray( data=q_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
-                                dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['Q'] = Dar
-        
-            Dar = xr.DataArray( data=u_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
-                                dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['U'] = Dar
-
-            Dar = xr.DataArray( data=v_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
-                                dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['V'] = Dar
-
-            Dar = xr.DataArray( data=w_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
-                                dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['W'] = Dar
-
-            yymmdd = str(pdTime_ERA[itim])[0:10]
-            hr=str(pdTime_ERA[itim])[11:13]
-            ss = str(int(hr)*3600).zfill(5)
-            timetag =  yymmdd+'-'+ss
-            filo= Bfilo + "." + timetag+ ".nc"
-            print( filo )
-            Wds.to_netcdf( filo ,format="NETCDF3_CLASSIC" )
-
-    if (dstTZHkey == 'tzyx' ):
-        tic_FVstag = time.perf_counter()
-        US,VS,slat,slon = FV.uvStaggers(U=u_ERA_xzCAM, 
-                                        V=v_ERA_xzCAM,
-                                        lon=lon_CAM,
-                                        lat=lat_CAM   )
-        toc_FVstag = time.perf_counter()
-        pTime = f"Creating FV staggered US,VS took {toc_FVstag - tic_FVstag:0.4f} seconds"
-        print(pTime)
-        
-        nt,nz,ny,nx = np.shape( te_ERA_xzCAM )
-        for itim in np.arange( ntime ):
-            dims   = ["lon","lat","time","lev","ilev"]
-            coords = dict( 
-                lon  = ( ["lon"],lon_CAM ),
-                lat  = ( ["lat"],lat_CAM ),
-                slon  = ( ["slon"],slon ),
-                slat  = ( ["slat"],slat ),
-                lev  = ( ["lev"],lev),
-                ilev = ( ["ilev"],ilev),
-                time = ( ["time"],  np.array(itim ,ndmin=1 ) ), #pd.to_datetime( pdTime_ERA[itim] ) ),
-            )
-        
-            Wds = xr.Dataset( coords=coords  )
-            Wds["TimeStamp"] = pd.to_datetime( pdTime_ERA[itim] )
-            Wds["P_00"] = 100_000.
-        
-            Dar = xr.DataArray( data=aint_CAM, dims=('ilev',),
-                                attrs=dict( description='interface hybrid eta coordinate A-coeff ',units='1',) ,) 
-            Wds['hyai'] = Dar
-
-            Dar = xr.DataArray( data=bint_CAM, dims=('ilev',),
-                                attrs=dict( description='interface hybrid eta coordinate B-coeff ',units='1',) ,) 
-            Wds['hybi'] = Dar
-
-            Dar = xr.DataArray( data=amid_CAM, dims=('lev',),
-                                attrs=dict( description='mid-level hybrid eta coordinate A-coeff ',units='1',) ,) 
-            Wds['hyam'] = Dar
-
-            Dar = xr.DataArray( data=bmid_CAM, dims=('lev',),
-                                attrs=dict( description='mid-level hybrid eta coordinate B-coeff ',units='1',) ,) 
-            Wds['hybm'] = Dar
-        
-            Dar = xr.DataArray( data=area_CAM, dims=('lat','lon',),
-                                attrs=dict( description='Cell area',units='Steradians',) ,) 
-            Wds['area'] = Dar
-
-            Dar = xr.DataArray( data=phis_CAM, dims=('lat','lon',),
-                                attrs=dict( description='Surface Geopotential Height',units='m+2 s-2',) ,) 
-            Wds['PHIS'] = Dar
-
-            Dar = xr.DataArray( data=phis_ERA_xCAM, dims=('lat','lon',),
-                                attrs=dict( description='ERA Surface Geopotential Height',units='m+2 s-2',) ,) 
-            Wds['PHIS_ERA'] = Dar
-
-            Dar = xr.DataArray( data=ps_CAM[itim,:,:].reshape(1,ny,nx) , 
-                                dims=('time','lat','lon',),
-                                attrs=dict( description='Surface Pressure',units='Pa',) ,) 
-            Wds['PS'] = Dar
-    
-            Dar = xr.DataArray( data=te_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['T'] = Dar
-
-            Dar = xr.DataArray( data=q_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['Q'] = Dar
-        
-            Dar = xr.DataArray( data=u_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['U'] = Dar
-
-            Dar = xr.DataArray( data=v_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['V'] = Dar
-
-            Dar = xr.DataArray( data=US[itim,:,:,:].reshape(1,nz,ny-1,nx), 
-                                dims=('time','lev','slat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['US'] = Dar
-
-            Dar = xr.DataArray( data=VS[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','slon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['VS'] = Dar
-
-            Dar = xr.DataArray( data=w_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
-                                dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
-            Wds['W'] = Dar
-        
-            yymmdd = str(pdTime_ERA[itim])[0:10]
-            hr=str(pdTime_ERA[itim])[11:13]
-            ss = str(int(hr)*3600).zfill(5)
-            timetag =  yymmdd+'-'+ss
-            filo= Bfilo + "." + timetag+ ".nc"
-            print( filo )
-            Wds.to_netcdf( filo ,format="NETCDF3_CLASSIC" )
-
-    code = 1
-    return code
-
-#def Driver():
-def main(year,month,day,hour):
-    import calendar
-    
-    tic_total = time.perf_counter()
-    days_in_month = calendar.monthrange(year,month)[1]
-
-    print( f"About to process {year:n}-{month:n}-{day:n}")
-
-
-
-    RegridMethod = 'CONSERVE'
-
-    """
-    DstVgrid='L58'
-    Dst='ne30pg3'
-    Src='ERA5'
-    """
-    DstVgrid='L32'
-    Dst='fv1x1'
-    Src='ERA5'
-
-    lnPS=False
-    if(lnPS==True):
-        ver='lnPS'
-    else:
-        ver=''
-
-
-    ret1 = prep(Dst=Dst, DstVgrid=DstVgrid ,Src=Src, WOsrf=True, RegridMethod=RegridMethod )
-    if (day==99):
-        for iday in np.arange( days_in_month):
-            ret2 = get_ERA5( year=year ,month=month ,day=iday+1 , hour0=99 )
-            ret3 = xRegrid(HorzInterpLnPs=lnPS )
-            ret4 = write_netcdf(version=ver+'Test01')
-    else:
-        ret2 = get_ERA5( year=year ,month=month ,day=day , hour0=hour )
-        ret3 = xRegrid(HorzInterpLnPs=lnPS )
-        ret4 = write_netcdf(version=ver+'Test01')
-        
-    code = 1
-    toc_total = time.perf_counter()
-
-    pTime = f"Total processing time was  {toc_total - tic_total:0.4f} seconds"
-    print(pTime)
-
-if __name__ == "__main__":
-    # argument: indir -> get all nc files in this directory
-    # argument: map -> the offlinemap file already prepared
-    # argument: outdir -> directory where remapped files should go
-    # my_parser = arg.ArgumentParser()
-    # my_parser.add_argument("--month", type=int)
-    # my_parser.add_argument("--year", type=int)
-    # args = my_parser.parse_args()
-    
-    my_parser = arg.ArgumentParser()
-    my_parser.add_argument("--month", type=int, default=1)
-    my_parser.add_argument("--year", type=int, default=2010)
-    my_parser.add_argument("--day", type=int, default=1)
-    my_parser.add_argument("--hour", type=int, default=99)
-    args = my_parser.parse_args()
-    main(args.year, args.month, args.day, args.hour )

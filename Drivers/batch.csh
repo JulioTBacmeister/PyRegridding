@@ -28,4 +28,4 @@ module load conda
 
 conda activate npl-2022b
 
-../Regridder/GenRegrid.py --year=1980 --month=1 --day=99 --hour=99
+./DrvRegrid.py --year=2021 --month=6 --day=99 --hour=99 --Dst='Arctic' --DstVgrid='L32'
