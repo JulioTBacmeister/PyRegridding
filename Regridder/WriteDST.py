@@ -8,8 +8,11 @@ import pandas as pd
 
 import FVStagger as FV
 
+import time as TimeUtil
+
 #from GlobalVarClass import Gv as *
 from GlobalVarClass import Gv
+
 
 
 def write_netcdf( version='' ):
@@ -137,12 +140,12 @@ def write_netcdf( version='' ):
             Wds.to_netcdf( filo ,format="NETCDF3_CLASSIC" )
 
     if (Gv.dstTZHkey == 'tzyx' ):
-        tic_FVstag = time.perf_counter()
+        tic_FVstag = TimeUtil.perf_counter()
         US,VS,slat,slon = FV.uvStaggers(U=u_ERA_xzCAM, 
                                         V=v_ERA_xzCAM,
                                         lon=lon_CAM,
                                         lat=lat_CAM   )
-        toc_FVstag = time.perf_counter()
+        toc_FVstag = TimeUtil.perf_counter()
         pTime = f"Creating FV staggered US,VS took {toc_FVstag - tic_FVstag:0.4f} seconds"
         print(pTime)
         
