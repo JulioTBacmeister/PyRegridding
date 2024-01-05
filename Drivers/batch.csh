@@ -28,4 +28,7 @@ module load conda
 
 conda activate npl-2022b
 
-./DrvRegrid.py --year=2021 --month=6 --day=99 --hour=99 --Dst='Arctic' --DstVgrid='L32'
+source config.txt
+
+#./DrvRegrid.py --year=2021 --month=6 --day=99 --hour=99 --Dst='Arctic' --DstVgrid='L32'
+./DrvRegrid.py --year=2000 --month=$month --day=99 --hour=99 --Dst='ne30pg3' --DstVgrid='L93'

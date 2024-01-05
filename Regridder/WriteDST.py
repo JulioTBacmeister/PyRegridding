@@ -43,7 +43,8 @@ def write_netcdf( version='' ):
     
     ntime = np.shape(pdTime_ERA)[0]
     print(ntime)
-    Bfilo="/glade/scratch/juliob/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version #  + "."     #  + timetag+ ".nc"
+    Bfilo="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
+    #  + "."     #  + timetag+ ".nc"
 
     
     

@@ -101,7 +101,7 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     print(monStr)
     print(ymdh) 
 
-    era5dir = "/glade/collections/rda/data/ds633.6/e5.oper.an.ml/"
+    era5dir = "/glade/campaign/collections/rda/data/ds633.6/e5.oper.an.ml/"
     wrkdir=era5dir+monStr+"/"
 
     print(Gv.dstTZHkey)
@@ -141,6 +141,7 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     dsV_ERA   = xr.open_mfdataset( vfile , data_vars='different', coords='different')
     dsW_ERA   = xr.open_mfdataset( wfile , data_vars='different', coords='different')
     toc = time.perf_counter()
+    print( all_ERA_files )
     pTime = f"Reading data vars for {ymdh} took  {toc - tic_overall:0.4f} seconds"
     print(pTime)
 

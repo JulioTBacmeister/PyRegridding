@@ -13,6 +13,9 @@ import Initialize as Init
 import WriteDST as Wrt
 import ReadInSrc as Rd 
 
+import importlib
+importlib.reload( Rd )
+
 #Rdry = Con.Rdry() # 
 
 
