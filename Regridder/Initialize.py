@@ -64,6 +64,13 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     cesm_inputdata_dir = '/glade/campaign/cesm/cesmdata/cseg/inputdata/'
     #my_bndtopo = 
     print( f"In prep Src= {Src} to Dst={Dst} " )
+
+    if (Dst == 'POLARRES'):
+        Gv.dstHkey = 'c'
+        Gv.dst_type ='mesh'
+        Gv.dst_scrip ='/glade/work/aherring/grids/var-res/ne0np4.POLARRES.ne30x4/grids/POLARRES_ne30x4_np4_SCRIP.nc'
+        Gv.dst_TopoFile = '/glade/work/aherring/grids/var-res/ne0np4.POLARRES.ne30x4/topo/POLARRES_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240118.nc'
+        
     if (Dst == 'Arctic'):
         Gv.dstHkey = 'c'
         Gv.dst_type='mesh'

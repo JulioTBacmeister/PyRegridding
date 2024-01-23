@@ -1,5 +1,5 @@
 # Python Script: update_config.py
-
+import yaml
 """
 def read_config(file_path):
     config = {}
@@ -9,6 +9,15 @@ def read_config(file_path):
             config[key] = int(value)
     return config
 """
+def read_config_yaml(file_path):
+    with open(file_path, "r") as config_file:
+        config = yaml.safe_load(config_file)
+    return config
+
+def write_config_yaml(file_path, config):
+    with open(file_path, "w") as config_file:
+        yaml.dump(config, config_file)
+
 def read_config(file_path):
     config = {}
     with open(file_path, 'r') as file:
@@ -18,7 +27,10 @@ def read_config(file_path):
                 continue
 
             key, value = line.strip().split('=')
-            config[key] = int(value)
+            if key in ('year','month','day','hour','Resubmit'):
+                config[key] = int(value)
+            else:
+                config[key] = value
     return config
 
 def write_config(file_path, config):

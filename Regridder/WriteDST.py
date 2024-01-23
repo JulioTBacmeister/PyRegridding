@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
+import os 
 
 import xarray as xr
 import numpy as np
@@ -43,12 +44,13 @@ def write_netcdf( version='' ):
     
     ntime = np.shape(pdTime_ERA)[0]
     print(ntime)
-    Bfilo="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
-    #  + "."     #  + timetag+ ".nc"
+    Bdiro="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst    
+    #######
+    os.makedirs( Bdiro , exist_ok=True )
 
-    
-    
-    
+    #Bfilo="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
+    Bfilo= Bdiro + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
+
     
     if (Gv.doWilliamsonOlson==True):
         Bfilo = Bfilo + '_WO'
@@ -114,22 +116,22 @@ def write_netcdf( version='' ):
 
             Dar = xr.DataArray( data=q_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
                                 dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='specific humidity',units='kg kg-1',) ,) 
             Wds['Q'] = Dar
         
             Dar = xr.DataArray( data=u_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
                                 dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='X-wind',units='m s-1',) ,) 
             Wds['U'] = Dar
 
             Dar = xr.DataArray( data=v_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
                                 dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Y-wind',units='m s-1',) ,) 
             Wds['V'] = Dar
 
             Dar = xr.DataArray( data=w_ERA_xzCAM[itim,:,:].reshape(1,nz,ncol), 
                                 dims=('time','lev','ncol',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Vertical motion',units='Pa s-1',) ,) 
             Wds['W'] = Dar
 
             yymmdd = str(pdTime_ERA[itim])[0:10]
@@ -207,32 +209,32 @@ def write_netcdf( version='' ):
 
             Dar = xr.DataArray( data=q_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
                                 dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Specific humidity',units='kg kg-1',) ,) 
             Wds['Q'] = Dar
         
             Dar = xr.DataArray( data=u_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
                                 dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='X-wind',units='m s-1',) ,) 
             Wds['U'] = Dar
 
             Dar = xr.DataArray( data=v_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
                                 dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Y-wind',units='m s-1',) ,) 
             Wds['V'] = Dar
 
             Dar = xr.DataArray( data=US[itim,:,:,:].reshape(1,nz,ny-1,nx), 
                                 dims=('time','lev','slat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Staggered X-wind',units='m s-1',) ,) 
             Wds['US'] = Dar
 
             Dar = xr.DataArray( data=VS[itim,:,:,:].reshape(1,nz,ny,nx), 
                                 dims=('time','lev','lat','slon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Staggered Y-wind',units='m s-1',) ,) 
             Wds['VS'] = Dar
 
             Dar = xr.DataArray( data=w_ERA_xzCAM[itim,:,:,:].reshape(1,nz,ny,nx), 
                                 dims=('time','lev','lat','lon',),
-                                attrs=dict( description='Air Temperature',units='K',) ,) 
+                                attrs=dict( description='Vertical motion',units='Pa s-1',) ,) 
             Wds['W'] = Dar
         
             yymmdd = str(pdTime_ERA[itim])[0:10]

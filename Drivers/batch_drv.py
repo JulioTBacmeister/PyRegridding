@@ -7,25 +7,25 @@ import DrvRegrid as DR
 
 def main():
 
-    theYear = 2002
-    file_path = './config.txt'  # Specify the path to your config file
+    theYear = 2003
+    file_path = './config.yaml'  # Specify the path to your config file
 
-    config = uc.read_config( file_path )
+    config = uc.read_config_yaml( file_path )
     print( config )
     
     # Add the regrid commands here:
     # ...
     #. ./DrvRegrid.py --year=2000 --month=$month --day=99 --hour=99 --Dst='ne30pg3' --DstVgrid='L93'
     
-    DR.main( year=config['year'] , month=config['month'] , day=99, hour=99 , Dst='ne30pg3' , DstVgrid='L93' , Src='ERA5' )
+    DR.main( year=config['year'] , month=config['month'] , day=config['day'], hour=config['hour'] , Dst=config['Dst'] , DstVgrid=config['DstVgrid'] , Src='ERA5' )
     
     #------------------------------
     
     config = uc.increment_month( config )
     print( config )
-    uc.write_config(file_path, config)
+    uc.write_config_yaml(file_path, config)
    
-    if ((config['year']==theYear) and (config['month']<=12)):
+    if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>0) ):
         print("YAAA AAAAaaaa PP ")
         
         sp.run(f"qsub PyBatch.csh", 

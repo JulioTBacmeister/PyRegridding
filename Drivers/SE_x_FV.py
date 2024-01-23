@@ -48,6 +48,8 @@ importlib.reload( Con )
 
 def Hregrid(case,BaseDir,ymdPat='*'):
     
+
+    hsPat = 'cam.h0'
     
     ####################
     #case = "test2.04"
@@ -61,8 +63,8 @@ def Hregrid(case,BaseDir,ymdPat='*'):
 
     ####################
     Dst     = 'fv0.9x1.25'
-    DstTag  = 'regridded'   # new subdirectory tag for regridded data
-    DstDir = SrcDir.replace('hist', DstTag )
+    DstTag  = '/regridded/'   # new subdirectory tag for regridded data
+    DstDir = SrcDir.replace('/hist/', DstTag )
 
     #DstDir  = BaseDir+case+'/atm/regridded/'
     #DstFile = DstDir + case + '.cam.h0.2000-01.nc'
@@ -118,8 +120,12 @@ def Hregrid(case,BaseDir,ymdPat='*'):
     # Pattern to match all h0 files in the specified directory
     ###########################################################
     #SrcFile = SrcDir + case + '.cam.h0.*.nc'
-    SrcFile = SrcDir + case + '.cam.h0.' + ymdPat + '.nc'
-    DstFile = DstDir + case + '.cam.h0.' + ymdPat + '.nc'
+
+    
+    #SrcFile = SrcDir + case + '.cam.h0.' + ymdPat + '.nc'
+    #DstFile = DstDir + case + '.cam.h0.' + ymdPat + '.nc'
+    SrcFile = SrcDir + case + '.'+ hsPat + '.' + ymdPat + '.nc'
+    DstFile = DstDir + case + '.'+ hsPat + '.' + ymdPat + '.nc'
 
     print(f" File list made from pattern: {SrcFile} " )
     
@@ -177,12 +183,15 @@ def Hregrid(case,BaseDir,ymdPat='*'):
               , 'Nudge_U'
               , 'Nudge_V'
               , 'Nudge_T'
+              , 'UTGW_MOVMTN'
+              , 'VTGW_MOVMTN'
               , 'UPWP_CLUBB'
               , 'VPWP_CLUBB'
               , 'WP2_CLUBB'
               , 'WP3_CLUBB'
               , 'WPTHLP_CLUBB'
               , 'THLP2_CLUBB'
+              , 'STEND_CLUBB'
               , 'PHIS'
               , 'U10'
               , 'LANDFRAC' ]
@@ -198,7 +207,7 @@ def Hregrid(case,BaseDir,ymdPat='*'):
         SrcFile = fileN
         
         # Make destination file name by replacing 'hist' in path
-        DstFile = SrcFile.replace('hist', DstTag )
+        DstFile = SrcFile.replace('/hist/', DstTag )
 
         DstFileSizeThresh = 0
         """
