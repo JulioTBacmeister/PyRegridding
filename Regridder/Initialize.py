@@ -10,7 +10,10 @@ from GlobalVarClass import Gv
 import xarray as xr
 import numpy as np
 
-import ESMF as E
+try:
+    import ESMF as E
+except ImportError:
+    import esmpy as E
 
 import importlib
 import time
@@ -65,62 +68,20 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     #my_bndtopo = 
     print( f"In prep Src= {Src} to Dst={Dst} " )
 
-    if (Dst == 'POLARRES'):
-        Gv.dstHkey = 'c'
-        Gv.dst_type ='mesh'
-        Gv.dst_scrip ='/glade/work/aherring/grids/var-res/ne0np4.POLARRES.ne30x4/grids/POLARRES_ne30x4_np4_SCRIP.nc'
-        Gv.dst_TopoFile = '/glade/work/aherring/grids/var-res/ne0np4.POLARRES.ne30x4/topo/POLARRES_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240118.nc'
-        
-    if (Dst == 'Arctic'):
-        Gv.dstHkey = 'c'
-        Gv.dst_type='mesh'
-        Gv.dst_scrip = '/glade/work/aherring/grids/var-res/ne0np4.ARCTIC.ne30x4/grids/ne0ARCTICne30x4_scrip_191212.nc'
-        Gv.dst_TopoFile = cesm_inputdata_dir+'atm/cam/topo/se/ne30x4_ARCTIC_nc3000_Co060_Fi001_MulG_PF_RR_Nsw042_c200428.nc'
+    DstInfo = GrU.gridInfo(Dst,Vgrid=DstVgrid)
+    Gv.dstHkey = DstInfo['Hkey']
+    Gv.dst_type =DstInfo['type']
+    Gv.dst_scrip =DstInfo['scrip']
+    Gv.dst_TopoFile = DstInfo['TopoFile']
+    Gv.dstVgridFile = DstInfo['VgridFile' ] 
 
-    if (Dst == 'ne30pg3'):
-        Gv.dstHkey = 'c'
-        Gv.dst_type='mesh'
-        Gv.dst_scrip = cesm_inputdata_dir+'share/scripgrids/ne30pg3_scrip_170611.nc'
-        #Gv.dst_TopoFile = '/glade/p/cgd/amp/juliob/bndtopo/latest/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
-        Gv.dst_TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
-
-    if ((Dst == 'fv0.9x1.25') or (Dst=='fv1x1')):
-        Gv.dstHkey = 'yx'
-        Gv.dst_type='grid'
-        Gv.dst_scrip = cesm_inputdata_dir+'share/scripgrids/fv0.9x1.25_141008.nc'
-        #dst_TopoFile='/glade/p/cgd/amp/juliob/bndtopo/latest/fv_0.9x1.25_gmted2010_modis_bedmachine_nc3000_Laplace0100_20220708.nc'
-        Gv.dst_TopoFile = cesm_inputdata_dir+'atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
-
-    if (Src == 'ERA5'):
-        Gv.srcHkey = 'yx'
-        Gv.src_type='grid'
-        Gv.src_scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_640x1280_scrip.nc'
-        Gv.src_TopoFile = '/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
-        Gv.p_00_ERA = 1.0
-
-    if (Src == 'ERAI'):
-        Gv.srcHkey = 'yx'
-        Gv.src_type='grid'
-        Gv.src_scrip = '/glade/work/juliob/ERA-I-grids/ERAI_256x512_scrip.nc'
-        Gv.src_TopoFile = '/glade/scratch/juliob/erai_2017/ei.oper.an.ml.regn128sc.2017010100.nc'
-        Gv.p_00_ERA = 100_000.
-
-    # ----------------------------------------------
-    # Get DST vertical grid from a file.
-    # These should be small files but 
-    # they aren't always.
-    # ----------------------------------------------
-    if (DstVgrid == 'L93' ):
-        # Read in CAM L93 vertical grid
-        Gv.dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_93L_CAM7_c202312.nc'
-
-    if (DstVgrid == 'L58' ):
-        # Read in CAM L58 vertical grid
-        Gv.dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
-
-    if (DstVgrid == 'L32' ):
-        #Gv.dstVgridFile = cesm_inputdata_dir+'atm/cam/inic/se/f.e22.FC2010climo.ne30pg3_ne30pg3_mg17.cam6_2_022.002.cam.i.0020-01-01-00000_c200610.nc'
-        Gv.dstVgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+    SrcInfo = GrU.gridInfo(Src)
+    Gv.srcHkey = SrcInfo['Hkey']
+    Gv.src_type =SrcInfo['type']
+    Gv.src_scrip =SrcInfo['scrip']
+    Gv.src_TopoFile = SrcInfo['TopoFile']
+    Gv.p_00_ERA = SrcInfo['p_00']
+    print( f"Used NEW, concise gridInfo function .... ...." )
 
     # Set grid keys for Src ERA5 reanalysis
     Gv.srcTHkey  = 't'  + Gv.srcHkey

@@ -18,7 +18,10 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 
-import ESMF as E
+try:
+    import ESMF as E
+except ImportError:
+    import esmpy as E
 
 import scripGen as SG
 import esmfRegrid as erg
@@ -46,7 +49,7 @@ importlib.reload( Con )
 
 
 
-def Hregrid(case,BaseDir,ymdPat='*'):
+def Hregrid(case,BaseDir,Dst,Src,ymdPat='*'):
     
 
     hsPat = 'cam.h0'
@@ -57,13 +60,24 @@ def Hregrid(case,BaseDir,ymdPat='*'):
 
 
     #####################
-    Src     = 'ne30pg3'
+    # Src     = 'ne30pg3'
+    # Dst     = 'fv0.9x1.25'
+
+    #######################
     SrcDir  = BaseDir+case+'/atm/hist/'
     SrcFile = SrcDir + case + '.cam.h0.2000-01.nc'
 
     ####################
-    Dst     = 'fv0.9x1.25'
-    DstTag  = '/regridded/'   # new subdirectory tag for regridded data
+    if ((Dst == 'fv0.9x1.25') or (Dst =='fv1x1')):
+        DstTag  = '/regridded/'   # new subdirectory tag for regridded data
+    ####################
+    elif (Dst == 'fv0.23x0.31'):
+        DstTag  = '/regridded_0.25/'   # new subdirectory tag for regridded data
+    ####################
+    else: 
+        DstTag  = '/regridded/'   # new subdirectory tag for regridded data
+
+    
     DstDir = SrcDir.replace('/hist/', DstTag )
 
     #DstDir  = BaseDir+case+'/atm/regridded/'
@@ -72,19 +86,23 @@ def Hregrid(case,BaseDir,ymdPat='*'):
     
     #######
     os.makedirs( DstDir , exist_ok=True )
-    
-    ####################
-    if (Src == 'ne30pg3'):
-        srcHkey = 'c'
-        src_type='mesh'
-        src_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/ne30pg3_scrip_170611.nc'
-        src_TopoFile = '/glade/p/cgd/amp/juliob/bndtopo/latest/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
 
-    if ((Dst == 'fv0.9x1.25') or (Dst=='fv1x1')):
-        dstHkey = 'yx'
-        dst_type='grid'
-        dst_scrip = '/glade/p/cesmdata/cseg/inputdata/share/scripgrids/fv0.9x1.25_141008.nc'
-        dst_TopoFile = '/glade/p/cesmdata/cseg/inputdata/atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
+    ############################################################
+    # dst_TopoFile 's here are only used to get lats and lons
+    # A better method may exist - GrU.latlon
+    ############################################################
+    DstInfo = GrU.gridInfo(Dst) #,Vgrid=DstVgrid)
+    dstHkey = DstInfo['Hkey']
+    dst_type =DstInfo['type']
+    dst_scrip =DstInfo['scrip']
+    dst_TopoFile = DstInfo['TopoFile']
+
+    SrcInfo = GrU.gridInfo(Src)
+    srcHkey = SrcInfo['Hkey']
+    src_type =SrcInfo['type']
+    src_scrip =SrcInfo['scrip']
+    src_TopoFile = SrcInfo['TopoFile']
+    print( f"Used NEW, concise gridInfo function .... ...." )
 
     # ----------------------------------------------
     # Make object for ESMF regridding from SRC
@@ -108,13 +126,6 @@ def Hregrid(case,BaseDir,ymdPat='*'):
                                     dstType  = dst_type  ,
                                     RegridMethod = RegridMethod )
 
-    ######################################
-    # Klugy way to get lats and lons for
-    # destination FV grid. SHould use
-    # scrip files somehow
-    ######################################
-    DstTopoData  = xr.open_dataset( dst_TopoFile )
-    
     
     ###########################################################
     # Pattern to match all h0 files in the specified directory
@@ -142,8 +153,18 @@ def Hregrid(case,BaseDir,ymdPat='*'):
     ######################################
     # Get invariant grid stuff for FV
     ######################################
-    lon_Dst = DstTopoData['lon'].values
-    lat_Dst = DstTopoData['lat'].values
+    if (dst_TopoFile != 'N/A' ):
+        ######################################
+        # Klugy way to get lats and lons for
+        # destination FV grid. SHould use
+        # scrip files somehow
+        ######################################
+        DstTopoData  = xr.open_dataset( dst_TopoFile )    
+        lon_Dst = DstTopoData['lon'].values
+        lat_Dst = DstTopoData['lat'].values
+    else:
+        lat_Dst,lon_Dst = GrU.latlon( scrip=dst_scrip, Hkey=dstHkey )
+        print( f"Used GrU.latlon {dst_scrip} for lat lon ")
 
     slon=(lon_Dst[1:]+lon_Dst[0:-1] )/2.
     slat=(lat_Dst[1:]+lat_Dst[0:-1] )/2.
@@ -364,9 +385,15 @@ def Hregrid(case,BaseDir,ymdPat='*'):
 
 if __name__ == "__main__":
     
+    #####################
+    # Src     = 'ne30pg3'
+    # Dst     = 'fv0.9x1.25'
+
     my_parser = arg.ArgumentParser()
     my_parser.add_argument("--case",     type=str )
     my_parser.add_argument("--BaseDir",  type=str, default="/glade/derecho/scratch/juliob/archive/")
     my_parser.add_argument("--ymdPat",  type=str, default="*")
+    my_parser.add_argument("--Src",  type=str, default="ne30pg3")
+    my_parser.add_argument("--Dst",  type=str, default="fv0.9x1.25")
     args = my_parser.parse_args()
-    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat )
+    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat, Src=args.Src, Dst=args.Dst )

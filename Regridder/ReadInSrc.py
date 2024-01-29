@@ -12,7 +12,10 @@ import xarray as xr
 import numpy as np
 import pandas as pd
 
-import ESMF as E
+try:
+    import ESMF as E
+except ImportError:
+    import esmpy as E
 
 import importlib
 import copy

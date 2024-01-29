@@ -15,7 +15,10 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 #import ana as a
 
-import ESMF as E
+try:
+    import ESMF as E
+except ImportError:
+    import esmpy as E
 
 import importlib
 

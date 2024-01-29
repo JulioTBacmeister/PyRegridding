@@ -5,6 +5,12 @@ import subprocess as sp
 import update_config as uc
 import DrvRegrid as DR
 
+#####################################################
+# This function is called by PyBatch.csh, and
+# then also submits PyBatch.csh after incrementing
+# month in config file.
+#####################################################
+
 def main():
 
     theYear = 2003
@@ -26,7 +32,7 @@ def main():
     uc.write_config_yaml(file_path, config)
    
     if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>0) ):
-        print("YAAA AAAAaaaa PP ")
+        print(f" Resubmitting myself through PyBatch.csh  ")
         
         sp.run(f"qsub PyBatch.csh", 
                shell=True )

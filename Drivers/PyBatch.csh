@@ -16,5 +16,6 @@ module load conda
 
 conda activate npl-2022b
 
+
 echo "Cruising .... "
 ./batch_drv.py

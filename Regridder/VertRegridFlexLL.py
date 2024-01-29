@@ -10,8 +10,11 @@ import xarray as xr
 import numpy as np
 from scipy import interpolate as intr
 
+try:
+    import ESMF as E
+except ImportError:
+    import esmpy as E
 
-import ESMF as E
 
 import importlib
 import glob

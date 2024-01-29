@@ -26,9 +26,6 @@ endif
 
 module load conda
 
-conda activate npl-2022b
+conda activate npl-2023b
 
-source config.txt
-
-#./DrvRegrid.py --year=2021 --month=6 --day=99 --hour=99 --Dst='Arctic' --DstVgrid='L32'
-./DrvRegrid.py --year=2000 --month=$month --day=99 --hour=99 --Dst='ne30pg3' --DstVgrid='L93'
+./SE_x_FV.py --case=fmthist_MM_x21_5
