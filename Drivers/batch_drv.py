@@ -13,11 +13,11 @@ import DrvRegrid as DR
 
 def main():
 
-    theYear = 2003
     file_path = './config.yaml'  # Specify the path to your config file
 
     config = uc.read_config_yaml( file_path )
     print( config )
+    theYear = config['TheProcYear']
     
     # Add the regrid commands here:
     # ...
@@ -28,6 +28,7 @@ def main():
     #------------------------------
     
     config = uc.increment_month( config )
+    config = uc.decrement_Resubmit( config )
     print( config )
     uc.write_config_yaml(file_path, config)
    

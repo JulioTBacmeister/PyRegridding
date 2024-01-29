@@ -49,11 +49,9 @@ importlib.reload( Con )
 
 
 
-def Hregrid(case,BaseDir,Dst,Src,ymdPat='*'):
+def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     
 
-    hsPat = 'cam.h0'
-    
     ####################
     #case = "test2.04"
     #BaseDir = "/glade/derecho/scratch/juliob/archive/"
@@ -388,12 +386,16 @@ if __name__ == "__main__":
     #####################
     # Src     = 'ne30pg3'
     # Dst     = 'fv0.9x1.25'
+    # hsPat = 'cam.h0'
+    
+
 
     my_parser = arg.ArgumentParser()
     my_parser.add_argument("--case",     type=str )
     my_parser.add_argument("--BaseDir",  type=str, default="/glade/derecho/scratch/juliob/archive/")
     my_parser.add_argument("--ymdPat",  type=str, default="*")
+    my_parser.add_argument("--hsPat",  type=str, default="cam.h0")
     my_parser.add_argument("--Src",  type=str, default="ne30pg3")
     my_parser.add_argument("--Dst",  type=str, default="fv0.9x1.25")
     args = my_parser.parse_args()
-    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat, Src=args.Src, Dst=args.Dst )
+    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat, hsPat=args.hsPat, Src=args.Src, Dst=args.Dst )

@@ -59,6 +59,11 @@ def increment_month(config):
         config['year'] += 1
     return config
 
+def decrement_Resubmit(config):
+    # Decrement the Resubmit counter
+    config['Resubmit'] -= 1
+    return config
+
 def main():
     file_path = './config.txt'  # Specify the path to your config file
     config = read_config(file_path)
