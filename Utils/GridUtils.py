@@ -76,6 +76,13 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
         p_00 = 100_000.
 
+    elif (grid == 'ne30np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne30np4_091226_pentagons.nc'
+        TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30np4_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_test_vX_c161114.nc'
+        p_00 = 100_000.
+
     elif (grid == 'POLARRES'):
         Hkey = 'c'
         type ='mesh'
@@ -98,6 +105,7 @@ def gridInfo( grid=None , **kwargs ):
         p_00 = 100_000.
 
     elif (grid == 'fv0.23x0.31'):
+        # This grid exists primarily for diagnostics. So, actual topo is not really needed
         Hkey = 'yx'
         type='grid'
         scrip = cesm_inputdata_dir+'share/scripgrids/fv0.23x0.31_071004.nc'
