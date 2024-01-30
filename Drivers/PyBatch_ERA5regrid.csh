@@ -14,8 +14,8 @@
 
 module load conda
 
-conda activate npl-2022b
+conda activate npl-2023b
 
 
 echo "Cruising .... "
-./batch_drv.py
+./drv_ERA5regrid_recur.py

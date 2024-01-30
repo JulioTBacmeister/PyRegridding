@@ -5,15 +5,15 @@ import subprocess as sp
 import update_config as uc
 import DrvRegrid as DR
 
-#####################################################
-# This function is called by PyBatch.csh, and
-# then also submits PyBatch.csh after incrementing
-# month in config file.
-#####################################################
+######################################################################
+# This function is called by PyBatch_ERA5regrid.csh, and
+# then may also resubmit PyBatch_ERA5regrid.csh after incrementing
+# month and decrementing Resubmit in config_ERA5regrid file.
+#####################################################################
 
 def main():
 
-    file_path = './config.yaml'  # Specify the path to your config file
+    file_path = './config_ERA5regrid.yaml'  # Specify the path to your config file
 
     config = uc.read_config_yaml( file_path )
     print( config )
@@ -35,7 +35,7 @@ def main():
     if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>0) ):
         print(f" Resubmitting myself through PyBatch.csh  ")
         
-        sp.run(f"qsub PyBatch.csh", 
+        sp.run(f"qsub PyBatch_ERA5regrid.csh", 
                shell=True )
         print(f"PyBatch ... " )
         

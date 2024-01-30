@@ -4,6 +4,11 @@ import MyConstants as Con
 Rgas = Con.Rdry() # 287.0 # J K-1 kg-1
 grav = Con.grav() # 9.8
 
+#####################
+# Notes.
+# Jan 2024
+#    - 'np.int' wont work with npl-2023b change to 'int'
+
 def Pressure ( am, bm, ai, bi, ps , p_00=100_000., Gridkey='tzc' ):
     # Should ASSERT that am ,bm, ai, and bi are 1D
 
@@ -92,7 +97,7 @@ def TandP150 ( te, pmid, delp, search_up_L=10, Gridkey='tzc', findHt=150. ):
         zagl  = np.zeros( (search_up_L+1, ncol) )
         dzagl = np.zeros( (search_up_L, ncol) )
         zaglm = np.zeros( (search_up_L, ncol) )
-        k150x = np.zeros( (search_up_L, ncol) , dtype=np.int )
+        k150x = np.zeros( (search_up_L, ncol) , dtype=int ) 
         te150 = np.zeros( (ncol) )
         pm150 = np.zeros( (ncol) )
         for Lx in np.arange( start=search_up_L-1, stop=-1, step=-1 ):
@@ -125,7 +130,7 @@ def TandP150 ( te, pmid, delp, search_up_L=10, Gridkey='tzc', findHt=150. ):
         zagl  = np.zeros( (nt, search_up_L+1, ncol) )
         dzagl = np.zeros( (nt, search_up_L, ncol) )
         zaglm = np.zeros( (nt, search_up_L, ncol) )
-        k150x = np.zeros( (nt, search_up_L, ncol) , dtype=np.int )
+        k150x = np.zeros( (nt, search_up_L, ncol) , dtype=int )
         te150 = np.zeros( (nt, ncol) )
         pm150 = np.zeros( (nt, ncol) )
         for i in np.arange( nt ):
@@ -160,7 +165,7 @@ def TandP150 ( te, pmid, delp, search_up_L=10, Gridkey='tzc', findHt=150. ):
         zagl  = np.zeros( (nt, search_up_L+1, ny,nx) )
         dzagl = np.zeros( (nt, search_up_L, ny,nx) )
         zaglm = np.zeros( (nt, search_up_L, ny,nx) )
-        k150x = np.zeros( (nt, search_up_L, ny,nx) , dtype=np.int )
+        k150x = np.zeros( (nt, search_up_L, ny,nx) , dtype=int )
         te150 = np.zeros( (nt, ny,nx) )
         pm150 = np.zeros( (nt, ny,nx) )
         for i in np.arange( nt ):
