@@ -1,20 +1,27 @@
 # Import packages 
 import sys
-sys.path.append('../Plotting/')
-""" Now you can imprt modules in ../Plotting"""
-sys.path.append('../Utils/')
-""" Now you can imprt modules in ../Utils"""
 import os
+#sys.path.append('../Utils/')
+#sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
+#-----------------------------------------
+# Find path to this module and calc/append 
+# paths relative to this path 
+#------------------------------------------
+module_a_dir = os.path.dirname(os.path.abspath(__file__))
+utils_path = os.path.join(module_a_dir, '..', 'Utils')
+sys.path.append(utils_path)
+print( f" a path added in {__name__} {utils_path} ")
+
 
 import xarray as xr
 import numpy as np
 from scipy import interpolate as intr
 
+
 try:
     import ESMF as E
 except ImportError:
     import esmpy as E
-
 
 import importlib
 import glob

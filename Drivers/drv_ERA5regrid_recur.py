@@ -26,8 +26,10 @@ def main():
     DR.main( year=config['year'] , month=config['month'] , day=config['day'], hour=config['hour'] , Dst=config['Dst'] , DstVgrid=config['DstVgrid'] , Src='ERA5' )
     
     #------------------------------
-    
-    config = uc.increment_month( config )
+    if (config['StepBy'].lower() == 'day'):
+        config = uc.increment_day( config ) #, NoLeapYear=True )
+    if (config['StepBy'].lower() == 'month'):
+        config = uc.increment_month( config ) #, NoLeapYear=True )
     config = uc.decrement_Resubmit( config )
     print( config )
     uc.write_config_yaml(file_path, config)

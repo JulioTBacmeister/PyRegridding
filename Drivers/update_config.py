@@ -1,14 +1,7 @@
 # Python Script: update_config.py
 import yaml
-"""
-def read_config(file_path):
-    config = {}
-    with open(file_path, 'r') as file:
-        for line in file:
-            key, value = line.strip().split('=')
-            config[key] = int(value)
-    return config
-"""
+from datetime import datetime, timedelta
+
 def read_config_yaml(file_path):
     with open(file_path, "r") as config_file:
         config = yaml.safe_load(config_file)
@@ -38,16 +31,21 @@ def write_config(file_path, config):
         for key, value in config.items():
             file.write(f"{key}={value}\n")
 
-def increment_day(config):
-    # Increment the day and handle month/year change if needed
-    # This is a simplistic implementation and does not handle all edge cases
-    config['day'] += 1
-    if config['day'] > 31:
-        config['day'] = 1
-        config['month'] += 1
-        if config['month'] > 12:
-            config['month'] = 1
-            config['year'] += 1
+
+def increment_day(config, NoLeapYear=False ):
+    # Create a datetime object from the config dictionary
+    current_date = datetime(config['year'], config['month'], config['day'])
+    
+    # Increment the day using timedelta
+    next_date = current_date + timedelta(days=1)
+
+    # Manually adjust if next_date is February 29 and NoLeapYear is True
+    if (NoLeapYear==True) and (next_date.month == 2) and (next_date.day == 29):
+        # Adjust to March 1
+        next_date = datetime(next_date.year, 3, 1)
+
+    # Update the config dictionary with the new date
+    config['year'], config['month'], config['day'] = next_date.year, next_date.month, next_date.day
     return config
 
 def increment_month(config):

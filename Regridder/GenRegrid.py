@@ -1,6 +1,20 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
+import os
+# Need to import modules in other directories
+#sys.path.append('../Utils/')
+#-----------------------------------------
+# Find path to this module and calc/append 
+# paths relative to this path 
+#------------------------------------------
+module_a_dir = os.path.dirname(os.path.abspath(__file__))
+utils_path = os.path.join(module_a_dir, '..', 'Utils')
+sys.path.append(utils_path)
+print( f" a path added in {__name__} {utils_path} ")
+
+
+
 import argparse as arg
 
 import GlobalVarClass
@@ -29,8 +43,6 @@ import esmfRegrid as erg
 import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
 
-# import modules in other directories
-sys.path.append('../Utils/')
 import GridUtils as GrU
 import MakePressures as MkP
 import humiditycalcs as hum

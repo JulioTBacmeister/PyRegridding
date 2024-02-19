@@ -3,8 +3,10 @@
 import sys
 import argparse as arg
 # import modules in other directories
-sys.path.append('/glade/work/juliob/PyRegridding/Regridder/')
-sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
+# sys.path.append('/glade/work/juliob/PyRegridding/Regridder/')
+# sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
+sys.path.append('../Regridder/')
+sys.path.append('../Utils/')
 
 
 import importlib
@@ -52,15 +54,6 @@ importlib.reload( Con )
 def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     
 
-    ####################
-    #case = "test2.04"
-    #BaseDir = "/glade/derecho/scratch/juliob/archive/"
-
-
-    #####################
-    # Src     = 'ne30pg3'
-    # Dst     = 'fv0.9x1.25'
-
     #######################
     SrcDir  = BaseDir+case+'/atm/hist/'
     SrcFile = SrcDir + case + '.cam.h0.2000-01.nc'
@@ -78,10 +71,6 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     
     DstDir = SrcDir.replace('/hist/', DstTag )
 
-    #DstDir  = BaseDir+case+'/atm/regridded/'
-    #DstFile = DstDir + case + '.cam.h0.2000-01.nc'
-
-    
     #######
     os.makedirs( DstDir , exist_ok=True )
 
@@ -146,8 +135,17 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     # Open first dataset to get lev, ilev
     ######################################
     SrcData = xr.open_dataset( file_list[0] )
-
-
+    #--------------------------------------
+    # Use PS to figure out shape of vars
+    PSdims = SrcData.PS.dims
+    if (PSdims[0] != 'time' ):
+        nt_Src=1
+        pad_w_time=True
+    else:
+        PSshape = np.shape( SrcData.PS )
+        nt_Src = PSshape[0]
+        pad_w_time=False
+    
     ######################################
     # Get invariant grid stuff for FV
     ######################################
@@ -170,16 +168,16 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     lev = SrcData['lev'].values
     ilev = SrcData['ilev'].values
 
-    nt,nz,ny,nx = 1,len(lev),len(lat_Dst),len(lon_Dst)
+    nt,nz,ny,nx = nt_Src,len(lev),len(lat_Dst),len(lon_Dst)
     print( nt,nz,ny,nx )
 
     dims   = ["lon","lat","time","lev","ilev","nbnd"]
 
     #########################################################
-    # Lis of variables to be regridded.
+    # List of variables to be regridded.
     # This list should be a super-set of the one in the ADF
     # config..YAML.
-    # PS needs to be here fro 3D vars.
+    # PS needs to be here for 3D vars.
     #########################################################
     ilist = [ 'SWCF'
             , 'PRECT'
@@ -190,7 +188,9 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
             , 'PS'
             , 'Q'
             , 'U'
+            , 'V'
             , 'T'
+            , 'OMEGA'
             , 'RELHUM'
             , 'TREFHT'
             , 'TS'
@@ -202,6 +202,12 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
               , 'Nudge_U'
               , 'Nudge_V'
               , 'Nudge_T'
+              , 'UTEND_CORE'
+              , 'VTEND_CORE'
+              , 'UTEND_PHYSTOT'
+              , 'VTEND_PHYSTOT'
+              , 'UTEND_GWDTOT'
+              , 'VTEND_GWDTOT'
               , 'UTGW_MOVMTN'
               , 'VTGW_MOVMTN'
               , 'UPWP_CLUBB'
@@ -313,14 +319,15 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                         xfld_Dst = np.zeros( (nt,ny,nx) , dtype=np.float64 )
                         nlev=1
                         dims = ('time','lat','lon',)
-                        Slice_Src = xfld_Src[0,:]
-                        Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
-                                            regrd = regrd , 
-                                            srcField= srcF , 
-                                            dstField= dstF , 
-                                            srcGridkey= srcHkey ,
-                                            dstGridkey= dstHkey )
-                        xfld_Dst[0,:,:] = Slice_Dst
+                        for tin in np.arange( nt ):
+                            Slice_Src = xfld_Src[tin,:]
+                            Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                                regrd = regrd , 
+                                                srcField= srcF , 
+                                                dstField= dstF , 
+                                                srcGridkey= srcHkey ,
+                                                dstGridkey= dstHkey )
+                            xfld_Dst[tin,:,:] = Slice_Dst
 
                     #############
                     # Bilinear remapping for 3D vars
@@ -331,15 +338,16 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                         xfld_Dst = np.zeros( (nt,nz,ny,nx) , dtype=np.float64 )
                         nlev = nz
                         dims = ('time','lev','lat','lon',)
-                        for L in np.arange( nlev ):
-                            Slice_Src = xfld_Src[0,L,:]
-                            Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
-                                                        regrd = regrd , 
-                                                        srcField= srcF , 
-                                                        dstField= dstF , 
-                                                        srcGridkey= srcHkey ,
-                                                        dstGridkey= dstHkey )
-                            xfld_Dst[0,L,:,:] = Slice_Dst
+                        for tin in np.arange( nt ):
+                            for L in np.arange( nlev ):
+                                Slice_Src = xfld_Src[tin,L,:]
+                                Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                                            regrd = regrd , 
+                                                            srcField= srcF , 
+                                                            dstField= dstF , 
+                                                            srcGridkey= srcHkey ,
+                                                            dstGridkey= dstHkey )
+                                xfld_Dst[tin,L,:,:] = Slice_Dst
 
                     Dar = xr.DataArray( data=xfld_Dst , 
                                         dims=dims,
@@ -350,17 +358,6 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                 else:                     
                     print( f"No field {fld} in Src file" )
                     
-            """
-            DstData.to_netcdf( DstFile  , format='NETCDF3_CLASSIC'  ) #,encoding={'time': {'unlimited': True}} )
-            ####################################################
-            # Have to resort to 'ncks' $&%^!! to make time an
-            # 'UNLIMITED' dimension as required by nrcat $&%^!!
-            # This is also the SLOWEST part of this process.
-            ####################################################
-            sp.run(f" ncks --mk_rec_dmn time {DstFile} -o {DstDir}tmp.nc && \
-                      mv {DstDir}tmp.nc {DstFile}", shell=True )
-            print(f"Made time dim UNLIMITED using ncks " )
-            """
             #######################################################
             # ChatGPT says you can do this ... hallucinating???
             # When saving, specify that 'time' should be an unlimited dimension

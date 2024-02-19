@@ -1,3 +1,12 @@
+import os
+#-----------------------------------------
+# Find path to this module 
+#------------------------------------------
+module_dir = os.path.dirname(os.path.abspath(__file__))
+print( f" {__name__} in {module_dir} ")
+
+
+
 def pi():
     value=3.141592653589793238
     units='1'

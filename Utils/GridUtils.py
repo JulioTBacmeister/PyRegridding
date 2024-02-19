@@ -104,8 +104,8 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
         p_00 = 100_000.
 
-    elif (grid == 'fv0.23x0.31'):
-        # This grid exists primarily for diagnostics. So, actual topo is not really needed
+    elif ((grid == 'fv0.23x0.31') or (grid == 'fvQxQ') or (grid=='quarter degree') or (grid=='25km') ):
+        # This grid exists primarily for plotting. So actual topo is not really needed
         Hkey = 'yx'
         type='grid'
         scrip = cesm_inputdata_dir+'share/scripgrids/fv0.23x0.31_071004.nc'
@@ -142,7 +142,6 @@ def gridInfo( grid=None , **kwargs ):
             # Read in CAM L58 vertical grid
             VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
         if (Vgrid == 'L32' ):
-            #Gv.dstVgridFile = cesm_inputdata_dir+'atm/cam/inic/se/f.e22.FC2010climo.ne30pg3_ne30pg3_mg17.cam6_2_022.002.cam.i.0020-01-01-00000_c200610.nc'
             VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
     else:
         VgridFile = ''
