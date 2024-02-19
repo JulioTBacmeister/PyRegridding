@@ -1,5 +1,5 @@
 #!/bin/csh
-#PBS -N ERA5proc
+#PBS -N sefvpy
 
 ### Charging account
 #PBS -A P93300642 
@@ -16,16 +16,10 @@
 
 # This job's working directory
 #
-echo `date`
-if ( $?PBS_O_WORKDIR == 1 ) then
-echo Working directory is $PBS_O_WORKDIR
-cd $PBS_O_WORKDIR
-endif
-
 
 
 module load conda
 
 conda activate npl-2023b
 
-./SE_x_FV.py --case=fmthist_MM_x21_5
+./SE_x_FV.py --case=fmthist_MM_control
