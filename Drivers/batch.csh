@@ -22,4 +22,5 @@ module load conda
 
 conda activate npl-2023b
 
-./SE_x_FV.py --case=fmthist_MM_control
+./SE_x_FV.py --case=fmthist_MM_control_TEM --hsPat=cam.h1
+./SE_x_FV.py --case=fmthist_MM_control_TEM --hsPat=cam.h0

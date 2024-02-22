@@ -136,14 +136,12 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     ######################################
     SrcData = xr.open_dataset( file_list[0] )
     #--------------------------------------
-    # Use PS to figure out shape of vars
-    PSdims = SrcData.PS.dims
-    if (PSdims[0] != 'time' ):
+    # Is time a dimension
+    if ( 'time' not in SrcData.dims ):
         nt_Src=1
         pad_w_time=True
     else:
-        PSshape = np.shape( SrcData.PS )
-        nt_Src = PSshape[0]
+        nt_Src = SrcData.dims['time']
         pad_w_time=False
     
     ######################################
