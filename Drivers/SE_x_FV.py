@@ -136,10 +136,19 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     ######################################
     SrcData = xr.open_dataset( file_list[0] )
     #--------------------------------------
-    # Is time a dimension
+    # Is time a dimension. If not add a stub dimension
+    # of length 1.
+    #---------------------------------
     if ( 'time' not in SrcData.dims ):
         nt_Src=1
         pad_w_time=True
+        # Add a time dimension with length 1
+        SrcData = SrcData.expand_dims(time=1)
+        # Create a time coordinate as a NumPy array
+        time_coord = np.array([0.])
+
+        # Assign the time coordinate to the dataset
+        SrcData = SrcData.assign_coords(time=time_coord)
     else:
         nt_Src = SrcData.dims['time']
         pad_w_time=False
