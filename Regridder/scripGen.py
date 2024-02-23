@@ -12,19 +12,11 @@ import copy
 
 
 #def latlon_to_scrip(nx, ny, lon0=-180., grid_imask=None, file_out=None):
-def latlon_to_scrip( grid_imask=None, file_out=None, lon0=-180., **kwargs ):
+def latlon_to_scrip( grid_imask=None, file_out=None, **kwargs ):
     """Generate a SCRIP grid file for a regular lat x lon grid.
     
     Parameters
     ----------
-    
-    nx : int
-       Number of points in x (longitude).
-    ny : int
-       Number of points in y (latitude).
-    lon0 : float, optional [default=-180]
-       Longitude on lefthand grid boundary. No effect if
-       if longitude vector is fed-in via kwargs !!!
     grid_imask : array-like, optional [default=None]       
        If the value is set to 0 for a grid point, then that point is
        considered masked out and won't be used in the weights 
@@ -32,9 +24,15 @@ def latlon_to_scrip( grid_imask=None, file_out=None, lon0=-180., **kwargs ):
     file_out : string, optional [default=None]
        File to which to write the grid.
 
+    Some possible kwargs
+    --------------------
+    nx : int
+       Number of points in x (longitude).
+    ny : int
+       Number of points in y (latitude).
+
     Returns
     -------
-    
     ds : xarray.Dataset
        The grid file dataset.       
     """
@@ -44,14 +42,46 @@ def latlon_to_scrip( grid_imask=None, file_out=None, lon0=-180., **kwargs ):
     else:
         SkipAreaCheck_ = False
     
-    if ('nx' in kwargs) and ('ny' in kwargs):
-        # compute coordinates of regular grid
-        nx = kwargs['nx']
-        ny = kwargs['ny']
-        dx = 360. / nx
-        dy = 180. / ny
-        lat = np.arange(-90. + dy / 2., 90., dy)
-        lon = np.arange(lon0 + dx / 2., lon0 + 360., dx)
+    if ('myGrid' in kwargs):
+        if ('S_edge' in kwargs):
+            s_edge = kwargs['S_edge']
+        else:
+            s_edge = -90.
+        if ('N_edge' in kwargs):
+            n_edge = kwargs['N_edge']
+        else:
+            n_edge = 90.
+        if ('W_edge' in kwargs):
+            w_edge = kwargs['W_edge']
+        else:
+            w_edge = 0.
+        if ('E_edge' in kwargs):
+            e_edge = kwargs['E_edge']
+        else:
+            e_edge = 360.
+
+        lon_span = e_edge - w_edge
+        lat_span = n_edge - s_edge
+
+        if ('nx' in kwargs) and ('ny' in kwargs):
+            # compute coordinates of regular grid
+            nx = kwargs['nx']
+            ny = kwargs['ny']
+            dx = lon_span / nx
+            dy = lat_span / ny
+            lat = np.arange(s_edge + dy / 2., n_edge , dy)
+            lon = np.arange(w_edge + dx / 2., e_edge , dx)
+
+        if ('dx' in kwargs) and ('dy' in kwargs):
+            # compute coordinates of regular grid
+            dx = kwargs['dx']
+            dy = kwargs['dy']
+            lat = np.arange(s_edge + dy / 2., n_edge , dy)
+            lon = np.arange(w_edge + dx / 2., e_edge , dx)
+            nx = len( lon )
+            ny = len( lat) 
+            print( f" myGrid w_edge={w_edge} ,e_edge={e_edge}, s_edge={s_edge} ,n_edge={n_edge} ")
+            print( f" myGrid nx={nx} ,ny={ny} ")
  
         # make 2D
         y_center = np.broadcast_to(lat[:, None], (ny, nx))
@@ -70,7 +100,9 @@ def latlon_to_scrip( grid_imask=None, file_out=None, lon0=-180., **kwargs ):
                              x_center - dx / 2.), # NW
                             axis=2)
 
-        
+        if (lon_span < 360.) or (lat_span<180.):
+            # Don't worry about matching 4*pi for non-global grid
+            SkipAreaCheck_ = True
         
     elif (('longitudes' in kwargs) and ('latitudes' in kwargs)):
         lat = kwargs['latitudes']
