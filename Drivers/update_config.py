@@ -48,6 +48,22 @@ def increment_day(config, NoLeapYear=False ):
     config['year'], config['month'], config['day'] = next_date.year, next_date.month, next_date.day
     return config
 
+def increment_hours(config, nhours=1, NoLeapYear=False ):
+    # Create a datetime object from the config dictionary
+    current_date = datetime(config['year'], config['month'], config['day'], config['hour'])
+    
+    # Increment the day using timedelta
+    next_date = current_date + timedelta(hours=nhours)
+
+    # Manually adjust if next_date is February 29 and NoLeapYear is True
+    if (NoLeapYear==True) and (next_date.month == 2) and (next_date.day == 29):
+        # Adjust to March 1
+        next_date = datetime(next_date.year, 3, 1)
+
+    # Update the config dictionary with the new date
+    config['year'], config['month'], config['day'] , config['hour'] = next_date.year, next_date.month, next_date.day, next_date.hour
+    return config
+
 def increment_month(config):
     # Increment the month and handle month/year change if needed
     # This is a simplistic implementation and does not handle all edge cases

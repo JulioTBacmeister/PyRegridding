@@ -48,17 +48,23 @@ def scrip_etc(grid=None):
     return scrip,Hkey,gtype
 
 ##############################
-def latlon(scrip,Hkey):
+def latlon(scrip,Hkey,get_area=False):
     
     S = xr.open_dataset( scrip )
     
     if (Hkey == 'c'):
         lon = S.grid_center_lon.values
         lat = S.grid_center_lat.values
-        
+        if (get_area == True ):
+            area = S.grid_area.values
+            return lat,lon,area
+        else:
+            return lat,lon
+    
     if (Hkey == 'yx'):
         lon = np.unique( S.grid_center_lon.values )
         lat = np.unique( S.grid_center_lat.values )
+        return lat,lon
         
         
         
@@ -68,7 +74,22 @@ def latlon(scrip,Hkey):
 def gridInfo( grid=None , **kwargs ):
 
     cesm_inputdata_dir = '/glade/campaign/cesm/cesmdata/cseg/inputdata/'
+    myGridFiles = '/glade/work/juliob/GridFiles/'
 
+
+    # ---------------------------------------------
+    # This if block is to account
+    # for the fact that sometimes (most times)
+    # when the destination grid is neXXnp4 or
+    # we are making IC files for an neXXpg3 run. 
+    # The topo that should be used for this is 
+    # 'PHIS_gll' on the neXXpg3 TopoFile ...
+    #----------------------------------------------
+    if ('IC_for_pg' in kwargs):
+        IC_for_pg_ = kwargs['IC_for_pg']
+    else:
+        IC_for_pg_ = False
+    
     if (grid == 'ne30pg3'):
         Hkey = 'c'
         type='mesh'
@@ -76,11 +97,72 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
         p_00 = 100_000.
 
+    elif (grid == 'ne120pg3'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne120pg3_scrip_170628.nc'
+        TopoFile = myGridFiles+'Topo/ne120pg3_gmted2010_modis_bedmachine_nc3000_Laplace0025_noleak_20240326.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne120np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne120np4_pentagons_100310.nc'
+        if (IC_for_pg_ ==True):
+            TopoFile = myGridFiles+'Topo/ne120pg3_gmted2010_modis_bedmachine_nc3000_Laplace0025_noleak_20240326.nc'
+            print( f' Grabbed pg3 TopoFile even though grid is {grid}' )
+        else:
+            TopoFile = myGridFiles+'Topo/ne120np4_gmted2010_modis_bedmachine_nc3000_Laplace0025_noleak_20240326.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne240pg3'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne240pg3_scrip_170628.nc'
+        TopoFile = myGridFiles+'Topo/ne240pg3_gmted2010_modis_bedmachine_nc3000_Laplace0012_noleak_20240329.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne240np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne240np4_091227_pentagons.nc'
+        if (IC_for_pg_ ==True):
+            TopoFile = myGridFiles+'Topo/ne240pg3_gmted2010_modis_bedmachine_nc3000_Laplace0012_noleak_20240329.nc'
+            print( f' Grabbed pg3 TopoFile even though grid is {grid}' )
+        else:
+            TopoFile = 'N/A' #myGridFiles+'Topo/ne120np4_gmted2010_modis_bedmachine_nc3000_Laplace0025_noleak_20240326.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne480pg3'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne480pg3_scrip_200108.nc'
+        TopoFile = myGridFiles+'Topo/ne480pg3_gmted2010_modis_bedmachine_nc3000_NoAniso_Laplace0006_noleak_20240412.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne480np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne480np4_scrip_c200409.nc'
+        if (IC_for_pg_ ==True):
+            TopoFile = myGridFiles+'Topo/ne480pg3_gmted2010_modis_bedmachine_nc3000_NoAniso_Laplace0006_noleak_20240412.nc'
+            print( f' Grabbed pg3 TopoFile even though grid is {grid}' )
+        else:
+            TopoFile = 'N/A' #myGridFiles+'Topo/ne120np4_gmted2010_modis_bedmachine_nc3000_Laplace0025_noleak_20240326.nc'
+        p_00 = 100_000.
+
     elif (grid == 'ne30np4'):
         Hkey = 'c'
         type='mesh'
         scrip = cesm_inputdata_dir+'share/scripgrids/ne30np4_091226_pentagons.nc'
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30np4_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_test_vX_c161114.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'ne4np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne4np4_pentagons.nc'
+        TopoFile = 'N/A' #
         p_00 = 100_000.
 
     elif (grid == 'POLARRES'):
@@ -97,6 +179,20 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/se/ne30x4_ARCTIC_nc3000_Co060_Fi001_MulG_PF_RR_Nsw042_c200428.nc'
         p_00 = 100_000.
 
+    elif (grid == 'MESO01'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = myGridFiles+'/Scrip/MESO01_ne30x4_np4_SCRIP.nc'
+        TopoFile = myGridFiles+'/Topo/topo_ne0np4.MESO01.ne30x4_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_230725.nc'
+        p_00 = 100_000.
+
+    elif (grid == 'MESO03'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = myGridFiles+'/Scrip/MESO03_ne30x4_np4_SCRIP.nc'
+        TopoFile = 'N/A'
+        p_00 = 100_000.
+
     elif ((grid == 'fv0.9x1.25') or (grid=='fv1x1')):
         Hkey = 'yx'
         type='grid'
@@ -109,6 +205,14 @@ def gridInfo( grid=None , **kwargs ):
         Hkey = 'yx'
         type='grid'
         scrip = cesm_inputdata_dir+'share/scripgrids/fv0.23x0.31_071004.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
+    elif ((grid == 'latlonOxO') or (grid=='eighth degree') or (grid=='12km') or (grid=='14km') ):
+        # This grid exists primarily for plotting. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_OxO_scrip.nc'
         TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
         p_00 = 100_000.
 

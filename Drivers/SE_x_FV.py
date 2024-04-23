@@ -51,13 +51,14 @@ importlib.reload( Con )
 
 
 
-def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
+def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConservative=False ):
     
 
     #######################
     SrcDir  = BaseDir+case+'/atm/hist/'
     SrcFile = SrcDir + case + '.cam.h0.2000-01.nc'
 
+    """
     ####################
     if ((Dst == 'fv0.9x1.25') or (Dst =='fv1x1')):
         DstTag  = '/regridded/'   # new subdirectory tag for regridded data
@@ -67,13 +68,23 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     ####################
     else: 
         DstTag  = '/regridded/'   # new subdirectory tag for regridded data
-
-    
+    """
+    DstTag = f'/{DstSubDir}/'
     DstDir = SrcDir.replace('/hist/', DstTag )
 
     #######
     os.makedirs( DstDir , exist_ok=True )
 
+
+    if (clean==True ):
+        # List all files in the directory
+        for filename in os.listdir(DstDir):
+            file_path = os.path.join(DstDir, filename)
+            # Check if it's a file
+            if os.path.isfile(file_path):
+                # Delete the file
+                os.remove(file_path)
+            
     ############################################################
     # dst_TopoFile 's here are only used to get lats and lons
     # A better method may exist - GrU.latlon
@@ -99,6 +110,7 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
     # files, because we will use conservative for 2D surface vars, but
     # bilinear for 3D met fields.
     # ----------------------------------------------
+    print(f'Creating Bilinear map {src_scrip} => {dst_scrip}')
     RegridMethod = "BILINEAR"
     regrdB, srcfB, dstfB = erg.Regrid( srcScrip = src_scrip , 
                                     srcType  = src_type  ,
@@ -106,6 +118,7 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                                     dstType  = dst_type  ,
                                     RegridMethod = RegridMethod )
 
+    print(f'Creating Conservative map {src_scrip} => {dst_scrip}')
     RegridMethod = "CONSERVE"
     regrdC, srcfC, dstfC = erg.Regrid( srcScrip = src_scrip , 
                                     srcType  = src_type  ,
@@ -198,6 +211,8 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
             , 'V'
             , 'T'
             , 'OMEGA'
+            , 'OMEGAU'
+            , 'OMEGAV'
             , 'RELHUM'
             , 'TREFHT'
             , 'TS'
@@ -205,6 +220,8 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
             , 'TAUY'
             , 'FSNT'
             , 'FLNT'
+              ,'SHFLX'
+              ,'LHFLX'
               , 'TMQ'
               , 'Nudge_U'
               , 'Nudge_V'
@@ -217,6 +234,9 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
               , 'VTEND_GWDTOT'
               , 'UTGW_MOVMTN'
               , 'VTGW_MOVMTN'
+              , 'UTGWORO'
+              , 'UTGWSPEC'
+              , 'BUTGWSPEC'
               , 'UPWP_CLUBB'
               , 'VPWP_CLUBB'
               , 'WP2_CLUBB'
@@ -283,7 +303,10 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
 
             DstData = xr.Dataset( coords=coords  )
 
-            DstData['time_bnds'] = SrcData['time_bnds']
+            if ( 'time_bnds' in SrcData ):
+                DstData['time_bnds'] = SrcData['time_bnds']
+            if ( 'time_bounds' in SrcData ):
+                DstData['time_bounds'] = SrcData['time_bounds']
             DstData['date'] = SrcData['date']
             DstData['datesec'] = SrcData['datesec']
 
@@ -299,6 +322,13 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                     'description': 'sum of PRECC and PRECL',}
                 SrcData['PRECT'].attrs.update(new_attributes)
                 print(f"Created PRECT")
+            if ( ('OMEGAU' not in SrcData) and ( ('OMEGA' in SrcData) and ('U' in SrcData)   ) ):
+                SrcData['OMEGAU'] = SrcData['OMEGA'] * SrcData['U']
+                new_attributes = {
+                    'units': 'Pa ms-2',
+                    'description': 'Vertical flux of zonal mom.',}
+                SrcData['OMEGAU'].attrs.update(new_attributes)
+                print(f"Created OMEGAU")
 
             ###################
             # March through variables
@@ -337,11 +367,18 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat):
                             xfld_Dst[tin,:,:] = Slice_Dst
 
                     #############
-                    # Bilinear remapping for 3D vars
-                    if (len_shap == 3 ):    
-                        regrd = regrdB 
-                        srcF  = srcfB
-                        dstF  = dstfB 
+                    # Bilinear remapping for most 3D vars
+                    if (len_shap == 3 ): 
+                        if ( (fld not in ('OMEGAU','OMEGAV' )) and (AllConservative==False) ):
+                            regrd = regrdB 
+                            srcF  = srcfB
+                            dstF  = dstfB 
+                        else: 
+                            regrd = regrdC 
+                            srcF  = srcfC
+                            dstF  = dstfC 
+                            print(f" using conervative remapping for {fld}")
+                            
                         xfld_Dst = np.zeros( (nt,nz,ny,nx) , dtype=np.float64 )
                         nlev = nz
                         dims = ('time','lev','lat','lon',)
@@ -401,5 +438,10 @@ if __name__ == "__main__":
     my_parser.add_argument("--hsPat",  type=str, default="cam.h0")
     my_parser.add_argument("--Src",  type=str, default="ne30pg3")
     my_parser.add_argument("--Dst",  type=str, default="fv0.9x1.25")
+    my_parser.add_argument("--DstSubDir", type=str, default="regridded")
+    my_parser.add_argument("--clean", action="store_true", help="Set clean to True when --clean")
+    my_parser.add_argument("--AllConservative", action="store_true", help="Set AllConservative to True when --AllConservative")
+
     args = my_parser.parse_args()
-    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat, hsPat=args.hsPat, Src=args.Src, Dst=args.Dst )
+    Hregrid( case=args.case, BaseDir=args.BaseDir, ymdPat=args.ymdPat, hsPat=args.hsPat, Src=args.Src, Dst=args.Dst, DstSubDir=args.DstSubDir, 
+            clean=args.clean, AllConservative=args.AllConservative )

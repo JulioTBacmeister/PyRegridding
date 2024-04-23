@@ -20,7 +20,7 @@ importlib.reload( Rd )
 
 
 
-def main(year, month, day, hour, Dst, DstVgrid, Src):
+def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg ):
     import calendar
     
     tic_total = time.perf_counter()
@@ -35,8 +35,15 @@ def main(year, month, day, hour, Dst, DstVgrid, Src):
     else:
         ver=''
 
+    # Override this when it can't be true
+    if (Dst not in ('ne480np4','ne240np4','ne120np4','ne30np4')):
+        IC_for_pg = False
+        print(f'  Setting IC_for_pg={IC_for_pg} because cannot be otherwise for {Dst} ' )
+    else: 
+        print(f'  {IC_for_pg}: This is making an IC file for {Dst} ' )
 
-    ret1 = Init.prep(Dst=Dst, DstVgrid=DstVgrid ,Src=Src, WOsrf=True, RegridMethod=RegridMethod )
+
+    ret1 = Init.prep(Dst=Dst, DstVgrid=DstVgrid ,Src=Src, WOsrf=True, RegridMethod=RegridMethod , IC_for_pg=IC_for_pg )
     sys.stdout.flush()
     if (day==99):
         for iday in np.arange( days_in_month):

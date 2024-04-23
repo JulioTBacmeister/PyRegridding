@@ -47,7 +47,7 @@ import GridUtils as GrU
 # be cleaned up
 #-------------------------------------------------------------
 
-def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMethod="CONSERVE" ):
+def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMethod="CONSERVE", IC_for_pg=False ):
     #---------------------------------------------
     # This function sets-up variables and objects 
     # that are need for horizontal and vertical 
@@ -68,7 +68,7 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     #my_bndtopo = 
     print( f"In prep Src= {Src} to Dst={Dst} " )
 
-    DstInfo = GrU.gridInfo(Dst,Vgrid=DstVgrid)
+    DstInfo = GrU.gridInfo(Dst,Vgrid=DstVgrid, IC_for_pg= IC_for_pg )
     Gv.dstHkey = DstInfo['Hkey']
     Gv.dst_type =DstInfo['type']
     Gv.dst_scrip =DstInfo['scrip']
@@ -98,20 +98,37 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     # Read in CAM topography. Also get
     # lon and lat and area for CAM (Dst)
     # grid.
+    # 2024-03-26:
+    # Here we need to account for the fact 
+    # that neXXpg3 grids need ICs on GLL (neXXnp4) 
+    # points. The right topo for generating these ICs
+    # lives in the neXXpg3 topo file under a different name:
+    #      PHIS_gll
     # ----------------------------------------------
     dsTopo_CAM=xr.open_dataset( Gv.dst_TopoFile )
     varsCAM  = list( dsTopo_CAM.variables )
-    Gv.phis_CAM = dsTopo_CAM['PHIS'].values
+    if (IC_for_pg==False):
+        Gv.phis_CAM = dsTopo_CAM['PHIS'].values
+    else:
+        Gv.phis_CAM = dsTopo_CAM['PHIS_gll'].values
+        print(f'   -- Making Initial Condition file for pg3 analog of {Dst}. Using PHIS_gll in TopoFile' )
     #---------------------------------------
     # It would be cleaner to get lat,lon directly
     # from the SCRIP file
+    # 2024-03-26:
+    # IMplementing the above for unstructured grids.
+    # Not sure I trust np.unique for lat-lon grids. 
+    # Need to figure out about area ....
     #---------------------------------------
-    Gv.lon_CAM  = dsTopo_CAM['lon'].values
-    Gv.lat_CAM  = dsTopo_CAM['lat'].values
-    if ('area' in varsCAM):
-        Gv.area_CAM = dsTopo_CAM['area'].values
+    if ( Gv.dstHkey == 'c' ):
+        Gv.lat_CAM, Gv.lon_CAM, Gv.area_CAM = GrU.latlon( scrip = Gv.dst_scrip , Hkey=Gv.dstHkey, get_area=True )
     else:
-        Gv.area_CAM = GrU.area2d( lon=Gv.lon_CAM, lat=Gv.lat_CAM )
+        Gv.lon_CAM  = dsTopo_CAM['lon'].values
+        Gv.lat_CAM  = dsTopo_CAM['lat'].values
+        if ('area' in varsCAM):
+            Gv.area_CAM = dsTopo_CAM['area'].values
+        else:
+            Gv.area_CAM = GrU.area2d( lon=Gv.lon_CAM, lat=Gv.lat_CAM )
 
     if (Src == 'ERA5'):
         # Read in ERA5 topography

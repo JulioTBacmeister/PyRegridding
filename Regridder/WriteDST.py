@@ -6,6 +6,7 @@ import os
 import xarray as xr
 import numpy as np
 import pandas as pd
+import scipy
 
 import FVStagger as FV
 
@@ -46,7 +47,7 @@ def write_netcdf( version='' ):
         SuperDir = "/glade/campaign/cgd/amp/juliob/ERAI"
     else:
         SuperDir = "/glade/campaign/cgd/amp/juliob/MiscRegridding"
-    
+
     ntime = np.shape(pdTime_ERA)[0]
     print(ntime)
     #Bdiro="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst    
@@ -54,6 +55,7 @@ def write_netcdf( version='' ):
     #######
     os.makedirs( Bdiro , exist_ok=True )
 
+    #version='test_netcdf4_default'
     #Bfilo="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
     Bfilo= Bdiro + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
 
@@ -75,10 +77,11 @@ def write_netcdf( version='' ):
                 lat  = ( ["ncol"],lat_CAM ),
                 lev  = ( ["lev"],lev),
                 ilev = ( ["ilev"],ilev),
-                time = ( ["time"],  np.array(itim ,ndmin=1 ) ), #pd.to_datetime( pdTime_ERA[itim] ) ),
+                time = ( ["time"],  np.array(itim ,ndmin=1 ,dtype=np.int32 ) ), #pd.to_datetime( pdTime_ERA[itim] ) ),
             )
         
             Wds = xr.Dataset( coords=coords  )
+            #Wds["TimeStamp"] = np.array( [itim * 24./ntime] ).astype( np.int32)  # pd.to_datetime( pdTime_ERA[itim] )
             Wds["TimeStamp"] = pd.to_datetime( pdTime_ERA[itim] )
             Wds["P_00"] = 100_000.
         
@@ -146,7 +149,7 @@ def write_netcdf( version='' ):
             timetag =  yymmdd+'-'+ss
             filo= Bfilo + "." + timetag+ ".nc"
             print( filo )
-            Wds.to_netcdf( filo ,format="NETCDF3_CLASSIC" )
+            Wds.to_netcdf( filo  , format="NETCDF3_64BIT" , engine='scipy' ) #,format="NETCDF3_CLASSIC" )
 
     if (Gv.dstTZHkey == 'tzyx' ):
         tic_FVstag = TimeUtil.perf_counter()
@@ -249,7 +252,7 @@ def write_netcdf( version='' ):
             timetag =  yymmdd+'-'+ss
             filo= Bfilo + "." + timetag+ ".nc"
             print( filo )
-            Wds.to_netcdf( filo ,format="NETCDF3_CLASSIC" )
+            Wds.to_netcdf( filo ) #,format="NETCDF3_CLASSIC" )
 
     code = 1
     return code
