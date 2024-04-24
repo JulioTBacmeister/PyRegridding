@@ -94,7 +94,8 @@ def gridInfo( grid=None , **kwargs ):
         Hkey = 'c'
         type='mesh'
         scrip = cesm_inputdata_dir+'share/scripgrids/ne30pg3_scrip_170611.nc'
-        TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
+        #TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
+        TopoFile = '/glade/campaign/cgd/amp/pel/topo/files/se/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240117.nc'
         p_00 = 100_000.
 
     elif (grid == 'ne120pg3'):
@@ -155,7 +156,11 @@ def gridInfo( grid=None , **kwargs ):
         Hkey = 'c'
         type='mesh'
         scrip = cesm_inputdata_dir+'share/scripgrids/ne30np4_091226_pentagons.nc'
-        TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30np4_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_test_vX_c161114.nc'
+        if (IC_for_pg_ ==True):
+            TopoFile = '/glade/campaign/cgd/amp/pel/topo/files/se/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240117.nc'
+            print( f' Grabbed pg3 TopoFile even though grid is {grid}' )
+        else:
+            TopoFile = 'N/A' 
         p_00 = 100_000.
 
     elif (grid == 'ne4np4'):
