@@ -241,12 +241,18 @@ def gridInfo( grid=None , **kwargs ):
         Vgrid = kwargs['Vgrid']
         if (Vgrid == 'L93' ):
             # Read in CAM L93 vertical grid
-            VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_93L_CAM7_c202312.nc'
+            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_93L_CAM7_c202312.nc'
+            VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_c202312.nc'
         if (Vgrid == 'L58' ):
             # Read in CAM L58 vertical grid
-            VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+            VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+        if (Vgrid == 'L42' ):
+            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+            VgridFile = f'{myGridFiles}/Vertical/GRID_42L_CAM7.nc'
         if (Vgrid == 'L32' ):
-            VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+            VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
     else:
         VgridFile = ''
     
