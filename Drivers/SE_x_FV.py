@@ -199,7 +199,8 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
     # config..YAML.
     # PS needs to be here for 3D vars.
     #########################################################
-    ilist = [ 'SWCF'
+    ilist = [ 'area'
+            , 'SWCF'
             , 'PRECT'
             , 'LWCF'
             , 'PRECC'
@@ -348,7 +349,22 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                     # What is here will work for SE CAM output, i.e., 
                     # (time,col) or (time,lev,col)
                     #######################
-                    # Conservative remapping for 2D vars
+                    # Always Conservative remapping for 2D vars and area
+                    if (fld == 'area' ):    
+                        regrd = regrdC 
+                        srcF  = srcfC 
+                        dstF  = dstfC 
+                        xfld_Dst = np.zeros( (ny,nx) , dtype=np.float64 )
+                        nlev=1
+                        dims = ('lat','lon',)
+                        Slice_Src = xfld_Src[:]
+                        Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                            regrd = regrd , 
+                                            srcField= srcF , 
+                                            dstField= dstF , 
+                                            srcGridkey= srcHkey ,
+                                            dstGridkey= dstHkey )
+                        xfld_Dst[:,:] = Slice_Dst
                     if (len_shap == 2 ):    
                         regrd = regrdC 
                         srcF  = srcfC 
@@ -366,8 +382,9 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                                                 dstGridkey= dstHkey )
                             xfld_Dst[tin,:,:] = Slice_Dst
 
+
                     #############
-                    # Bilinear remapping for most 3D vars
+                    # Bilinear remapping for most 3D vars if AllConservative==False
                     if (len_shap == 3 ): 
                         if ( (fld not in ('OMEGAU','OMEGAV' )) and (AllConservative==False) ):
                             regrd = regrdB 
