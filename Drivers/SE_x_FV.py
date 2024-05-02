@@ -169,6 +169,7 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
     ######################################
     # Get invariant grid stuff for FV
     ######################################
+    DstScripData = xr.open_dataset( dst_scrip )
     if (dst_TopoFile != 'N/A' ):
         ######################################
         # Klugy way to get lats and lons for
@@ -349,22 +350,19 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                     # What is here will work for SE CAM output, i.e., 
                     # (time,col) or (time,lev,col)
                     #######################
-                    # Always Conservative remapping for 2D vars and area
-                    if (fld == 'area' ):    
-                        regrd = regrdC 
-                        srcF  = srcfC 
-                        dstF  = dstfC 
-                        xfld_Dst = np.zeros( (ny,nx) , dtype=np.float64 )
-                        nlev=1
+                    # Use area on scrip file if available
+                    if (fld == 'area') and ('grid_area' in DstScripData):    
                         dims = ('lat','lon',)
-                        Slice_Src = xfld_Src[:]
-                        Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
-                                            regrd = regrd , 
-                                            srcField= srcF , 
-                                            dstField= dstF , 
-                                            srcGridkey= srcHkey ,
-                                            dstGridkey= dstHkey )
-                        xfld_Dst[:,:] = Slice_Dst
+                        xfld_Dst = DstScripData.grid_area.values.reshape( ny, nx )
+                        print(f' using {fld} on scrip file')
+                        
+                    if (fld == 'area') and ('grid_area' not in DstScripData):    
+                        dims = ('lat','lon',)
+                        xfld_Dst = np.zeros( (ny,nx) , dtype=np.float64 )
+                        print(f' No {fld} on scrip file - ZEROS')
+                        
+                    #############################################
+                    # Always Conservative remapping for 2D vars
                     if (len_shap == 2 ):    
                         regrd = regrdC 
                         srcF  = srcfC 
@@ -381,7 +379,6 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                                                 srcGridkey= srcHkey ,
                                                 dstGridkey= dstHkey )
                             xfld_Dst[tin,:,:] = Slice_Dst
-
 
                     #############
                     # Bilinear remapping for most 3D vars if AllConservative==False
