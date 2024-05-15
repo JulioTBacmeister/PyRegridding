@@ -248,6 +248,15 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
               , 'STEND_CLUBB'
               , 'PHIS'
               , 'U10'
+            ,'UBOT'
+            ,'VBOT'
+            ,'U850'
+            ,'V850'
+            ,'U200'
+            ,'V200'
+             ,'T850'
+             ,'T500'
+             ,'T200'
               , 'LANDFRAC' ]
 
 
@@ -407,6 +416,9 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                                                             dstGridkey= dstHkey )
                                 xfld_Dst[tin,L,:,:] = Slice_Dst
 
+                    if (fld != 'area' ):
+                        xfld_Dst = np.array(xfld_Dst, dtype=np.float32) 
+                    
                     Dar = xr.DataArray( data=xfld_Dst , 
                                         dims=dims,
                                         attrs=attrs ,) 

@@ -247,7 +247,7 @@ def gridInfo( grid=None , **kwargs ):
         if (Vgrid == 'L93' ):
             # Read in CAM L93 vertical grid
             #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_93L_CAM7_c202312.nc'
-            VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_c202312.nc'
+            VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
         if (Vgrid == 'L58' ):
             # Read in CAM L58 vertical grid
             #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'

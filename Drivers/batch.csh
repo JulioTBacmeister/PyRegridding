@@ -25,7 +25,7 @@ conda activate npl-2023b
 #./SE_x_FV.py --case=POLARRES_FMT_x01_E --hsPat=cam.h1 --Src=POLARRES
 #./SE_x_FV.py --case=cDEV_ne120pg3_FMTHIST_DYAMOND_x01_e02 --hsPat=cam.h1i --Src=ne120pg3 --Dst=fvQxQ
 #./SE_x_FV.py --case=cDEV_ne240pg3_FMTHIST_aicn_x02 --hsPat=cam.h0a --Src=ne240pg3 --Dst=latlonOxO
+#./SE_x_FV.py --case=cDEV_ne240pg3_FMTHIST_aicn_x02 --hsPat=cam.h1i --Src=ne240pg3 --Dst=fv1x1 --DstSubDir=regridded_1x1 --AllConservative
 
-./SE_x_FV.py --case=cDEV_ne240pg3_FMTHIST_aicn_x02 --hsPat=cam.h1i --Src=ne240pg3 --Dst=fv1x1 --DstSubDir=regridded_1x1 --AllConservative
 
-
+./SE_x_FV.py --case=c153_ne30pg3_FMTHIST_x01 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1

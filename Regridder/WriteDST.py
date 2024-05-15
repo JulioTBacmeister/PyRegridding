@@ -149,7 +149,7 @@ def write_netcdf( version='' ):
             timetag =  yymmdd+'-'+ss
             filo= Bfilo + "." + timetag+ ".nc"
             print( filo )
-            Wds.to_netcdf( filo  , format="NETCDF3_64BIT" , engine='scipy' ) #,format="NETCDF3_CLASSIC" )
+            Wds.to_netcdf( filo  ) #, format="NETCDF3_64BIT" , engine='scipy' ) #,format="NETCDF3_CLASSIC" )
 
     if (Gv.dstTZHkey == 'tzyx' ):
         tic_FVstag = TimeUtil.perf_counter()

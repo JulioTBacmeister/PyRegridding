@@ -1,7 +1,7 @@
 #PBS -N ERA5proc
 
 ### Charging account
-#PBS -A P93300642 
+#PBS -A P93300042 
 ### Request one chunk of resources with N CPU and M GB of memory
 #PBS -l select=1:ncpus=16:mem=256GB
 ##PBS -l select=1:ncpus=64:mem=256GB
