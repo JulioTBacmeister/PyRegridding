@@ -33,12 +33,32 @@ def main():
     config = uc.read_config_yaml( file_path )
     print( config )
     theYear = config['TheProcYear']
+
+    if (Dst == 'ne480np4'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne480pg3'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne240np4'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne240pg3'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne120np4'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne120pg3'):
+        BestRegridMethod = 'CONSERVE_2ND' 
+    elif (Dst == 'ne30np4'):
+        BestRegridMethod = 'CONSERVE' 
+    elif (Dst == 'ne30pg3'):
+        BestRegridMethod = 'CONSERVE' 
+    else:
+        BestRegridMethod = 'CONSERVE' 
+
     
     # Add the regrid commands here:
     # ...
     #. ./DrvRegrid.py --year=2000 --month=$month --day=99 --hour=99 --Dst='ne30pg3' --DstVgrid='L93'
     
-    DR.main( year=config['year'] , month=config['month'] , day=config['day'], hour=config['hour'] , Dst=config['Dst'] , DstVgrid=config['DstVgrid'] , IC_for_pg=config['IC_for_pg'], Src='ERA5' )
+    DR.main( year=config['year'] , month=config['month'] , day=config['day'], hour=config['hour'] , Dst=config['Dst'] , DstVgrid=config['DstVgrid'] , IC_for_pg=config['IC_for_pg'], Src='ERA5' , RegridMethod=BestRegridMethod )
     
     #------------------------------
     if (config['StepBy'].lower() == 'day'):
@@ -52,7 +72,7 @@ def main():
     print( config )
     uc.write_config_yaml(file_path, config)
    
-    if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>0) ):
+    if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>=0) ):
         print(f" Resubmitting myself through PyBatch.csh  ")
         
         sp.run(f"qsub PyBatch_ERA5regrid.csh", 

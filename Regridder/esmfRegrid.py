@@ -42,6 +42,8 @@ def Regrid( srcScrip , dstScrip , srcType , dstType ,  RegridMethod="CONSERVE" ,
 
     if(RegridMethod.upper()=='CONSERVE'):
         regrid_method=E.RegridMethod.CONSERVE 
+    if(RegridMethod.upper()=='CONSERVE_2ND'):
+        regrid_method=E.RegridMethod.CONSERVE_2ND 
     if(RegridMethod.upper()=='BILINEAR'):
         regrid_method=E.RegridMethod.BILINEAR 
     

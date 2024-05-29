@@ -20,7 +20,7 @@ importlib.reload( Rd )
 
 
 
-def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg ):
+def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg, RegridMethod = 'CONSERVE'):
     import calendar
     
     tic_total = time.perf_counter()
@@ -28,7 +28,7 @@ def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg ):
 
     print( f"About to process {year:n}-{month:n}-{day:n}")
 
-    RegridMethod = 'CONSERVE'
+    #RegridMethod = 'CONSERVE'
     lnPS=False
     if(lnPS==True):
         ver='lnPS'
@@ -51,14 +51,14 @@ def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg ):
             sys.stdout.flush()
             ret3 = GnR.xRegrid(HorzInterpLnPs=lnPS )
             sys.stdout.flush()
-            ret4 = Wrt.write_netcdf(version=ver+'Test01')
+            ret4 = Wrt.write_netcdf(version=ver) #+'Test01')
 
     else:
         ret2 = Rd.get_Src( year=year ,month=month ,day=day , hour0=hour )
         sys.stdout.flush()
         ret3 = GnR.xRegrid(HorzInterpLnPs=lnPS )
         sys.stdout.flush()
-        ret4 = Wrt.write_netcdf(version=ver+'Test01')
+        ret4 = Wrt.write_netcdf(version=ver) #+'Test01')
         
     code = 1
     toc_total = time.perf_counter()

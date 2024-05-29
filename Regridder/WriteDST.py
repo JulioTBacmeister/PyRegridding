@@ -55,6 +55,13 @@ def write_netcdf( version='' ):
     #######
     os.makedirs( Bdiro , exist_ok=True )
 
+    if (Gv.RegridMethod == "CONSERVE"):
+        version = version + 'rgC1'
+    elif (Gv.RegridMethod == "CONSERVE_2ND"):
+        version = version + 'rgC2'
+    elif (Gv.RegridMethod == "BILINEAR"):
+        version = version + 'rgBI'
+        
     #version='test_netcdf4_default'
     #Bfilo="/glade/derecho/scratch/juliob/ERA5/" + Gv.MyDst + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 
     Bfilo= Bdiro + "/" + Gv.MySrc +"_x_"+ Gv.MyDst + "_"+ Gv.MyDstVgrid + "_" + version 

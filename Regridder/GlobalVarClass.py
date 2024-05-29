@@ -32,6 +32,7 @@ class VariableContainer:
         self.dstTZHkey=None
 
         self.doWilliamsonOlson=None
+        self.RegridMethod=None
 
         self.p_00_ERA=None
         self.p_00_CAM=None

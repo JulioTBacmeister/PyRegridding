@@ -61,6 +61,7 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
     tic_overall = time.perf_counter()
     Gv.MyDst,Gv.MyDstVgrid,Gv.MySrc = Dst,DstVgrid,Src
 
+    Gv.RegridMethod = RegridMethod
     Gv.doWilliamsonOlson = WOsrf
     Gv.p_00_CAM = 100_000.
 
