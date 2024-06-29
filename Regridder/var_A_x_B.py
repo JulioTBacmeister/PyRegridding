@@ -39,7 +39,9 @@ def Hregrid(avar=None,
     # avar (float): array to regridded
     # agrid(char): desc code for grid avar lives on, e.g., 'ne30pg3' 
     # akey(char): shape of input variable to bre horz regridded
-    #        Possible values 'c','yx','zc','zyx','tzc',tzyx'
+    #        Possible values 'c','yx','zc','zyx','tzc',tzyx' 
+    #        If akey=None then it is set to =src_Hkey and pure
+    #        2D process is assumed
     # bgrid(char): code for taarget grid. e.g., 'fv0.9x1.25'
     #  
     ####################
@@ -55,6 +57,8 @@ def Hregrid(avar=None,
     print(f" Agrid {agrid} {src_scrip} , {src_Hkey} , {src_type}")
     print(f" Bgrid {bgrid} {dst_scrip} , {dst_Hkey} , {dst_type}")
 
+    if (akey==None):
+        akey=src_Hkey
     
     lat_dst,lon_dst = GU.latlon( scrip=dst_scrip , Hkey = dst_Hkey )
 

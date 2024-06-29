@@ -236,6 +236,10 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
               , 'VTEND_GWDTOT'
               , 'UTGW_MOVMTN'
               , 'VTGW_MOVMTN'
+            ,'TAU_MOVMTN'
+            ,'TAU_redo'
+              ,'TAUARDGBETAX'
+              ,'TAUARDGBETAY'
               , 'UTGWORO'
               , 'UTGWSPEC'
               , 'BUTGWSPEC'
@@ -318,8 +322,10 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                 DstData['time_bnds'] = SrcData['time_bnds']
             if ( 'time_bounds' in SrcData ):
                 DstData['time_bounds'] = SrcData['time_bounds']
-            DstData['date'] = SrcData['date']
-            DstData['datesec'] = SrcData['datesec']
+            if ( 'date' in SrcData ):
+                DstData['date'] = SrcData['date']
+            if ( 'datesec' in SrcData ):
+                DstData['datesec'] = SrcData['datesec']
 
             DstData['hyai'] = SrcData['hyai']
             DstData['hybi'] = SrcData['hybi']

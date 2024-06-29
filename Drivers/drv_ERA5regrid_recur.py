@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # Import packages 
-import os 
+import os
+
+from mpi4py import MPI
+
+
 import subprocess as sp
 import update_config as uc
 import DrvRegrid as DR
@@ -33,7 +37,9 @@ def main():
     config = uc.read_config_yaml( file_path )
     print( config )
     theYear = config['TheProcYear']
-
+    # Destination grid
+    Dst=config['Dst']
+    
     if (Dst == 'ne480np4'):
         BestRegridMethod = 'CONSERVE_2ND' 
     elif (Dst == 'ne480pg3'):
@@ -53,6 +59,7 @@ def main():
     else:
         BestRegridMethod = 'CONSERVE' 
 
+    print(f' "I" have decided that the best regrid method is {BestRegridMethod}')
     
     # Add the regrid commands here:
     # ...
@@ -72,12 +79,16 @@ def main():
     print( config )
     uc.write_config_yaml(file_path, config)
    
-    if ((config['year']==theYear) and (config['month']<=12) and (config['Resubmit']>=0) ):
-        print(f" Resubmitting myself through PyBatch.csh  ")
-        
-        sp.run(f"qsub PyBatch_ERA5regrid.csh", 
-               shell=True )
-        print(f"PyBatch ... " )
+    if (( (config['year']==theYear) or (theYear<0) ) and (config['month']<=12) and (config['Resubmit']>=0) ):
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+
+        if (rank == 0):
+            print(f" Resubmitting myself through PyBatch.csh  ")
+            
+            sp.run(f"qsub PyBatch_ERA5regrid.csh", 
+                   shell=True )
+            print(f"PyBatch ... " )
         
     
     

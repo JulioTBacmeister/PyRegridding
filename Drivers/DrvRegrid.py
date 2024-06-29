@@ -26,7 +26,7 @@ def main(year, month, day, hour, Dst, DstVgrid, Src, IC_for_pg, RegridMethod = '
     tic_total = time.perf_counter()
     days_in_month = calendar.monthrange(year,month)[1]
 
-    print( f"About to process {year:n}-{month:n}-{day:n}")
+    print( f"About to process {year:04d}-{month:02d}-{day:02d}")
 
     #RegridMethod = 'CONSERVE'
     lnPS=False

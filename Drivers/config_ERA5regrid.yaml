@@ -1,11 +1,11 @@
-Dst: ne480np4
+Dst: ne240pg3
 DstVgrid: L93
-IC_for_pg: true
-Resubmit: 0
+IC_for_pg: false
+Resubmit: 20
 StepBy: hour
 StepN: 6
-TheProcYear: 2004
+TheProcYear: -1
 day: 1
-hour: 0
+hour: 6
 month: 7
-year: 2004
+year: 2010

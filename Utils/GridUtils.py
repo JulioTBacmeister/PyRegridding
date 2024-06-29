@@ -221,6 +221,14 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
         p_00 = 100_000.
 
+    elif (grid == 'CCIASI'  ):
+        # This grid exists for CCIASI analysis. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/CCIASI_scrip.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
     elif (grid == 'ERA5'):
         Hkey = 'yx'
         type='grid'
@@ -246,7 +254,7 @@ def gridInfo( grid=None , **kwargs ):
         Vgrid = kwargs['Vgrid']
         if (Vgrid == 'L93' ):
             # Read in CAM L93 vertical grid
-            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_93L_CAM7_c202312.nc'
+            # The file below though poorly named is the correct one to use for L93
             VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
         if (Vgrid == 'L58' ):
             # Read in CAM L58 vertical grid
