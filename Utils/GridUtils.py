@@ -258,13 +258,15 @@ def gridInfo( grid=None , **kwargs ):
             VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
         if (Vgrid == 'L58' ):
             # Read in CAM L58 vertical grid
-            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
             VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+        if (Vgrid == 'L56_86km' ):
+            # Read in a truncated WACCM (v6 70-level) grid with a top near 86km
+            VgridFile = f'{myGridFiles}/Vertical/GRID_56L_CAM7_TruncatedWACCM-Top86km_c20240705.nc'
         if (Vgrid == 'L42' ):
-            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+            # Not sure what this 32 level+ PBL refinements ??? Check!! (July 5 2024)
             VgridFile = f'{myGridFiles}/Vertical/GRID_42L_CAM7.nc'
         if (Vgrid == 'L32' ):
-            #VgridFile = '/glade/work/juliob/ERA5-proc/CAM-grids/Vertical/GRID_32L_CAM6.nc'
+            # 32-level CAM6 grid
             VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
     else:
         VgridFile = ''

@@ -74,6 +74,29 @@ if __name__ == "__main__":
     # my_parser.add_argument("--month", type=int)
     # my_parser.add_argument("--year", type=int)
     # args = my_parser.parse_args()
+
+
+    """
+    # Possible values for vertical grid (DstVgrid). 
+    # Code from ../Utils/GridUtils.py (7/5/24)
+    if (Vgrid == 'L93' ):
+        # Read in CAM L93 vertical grid
+        # The file below though poorly named is the correct one to use for L93
+        VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
+    if (Vgrid == 'L58' ):
+        # Read in CAM L58 vertical grid
+        VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+    if (Vgrid == 'L56_86km' ):
+        # Read in a truncated WACCM (v6 70-level) grid with a top near 86km
+        VgridFile = f'{myGridFiles}/Vertical/GRID_56L_CAM7_TruncatedWACCM-Top86km_c20240705.nc'
+    if (Vgrid == 'L42' ):
+        # Not sure what this 32 level+ PBL refinements ??? Check!! (July 5 2024)
+        VgridFile = f'{myGridFiles}/Vertical/GRID_42L_CAM7.nc'
+    if (Vgrid == 'L32' ):
+        # 32-level CAM6 grid
+        VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
+    """
+
     
     my_parser = arg.ArgumentParser()
     my_parser.add_argument("--month",    type=int, default=1)
