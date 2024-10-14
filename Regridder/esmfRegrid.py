@@ -81,7 +81,8 @@ def Regrid( srcScrip , dstScrip , srcType , dstType ,  RegridMethod="CONSERVE" ,
     srcField.data[:]=1e20
 
     if (write_wgts==True):
-        print(f"Generating weights file and wrt to {wgts_file}")
+        print(f"Generating regridding weights. Method {RegridMethod} : ESMF method= {regrid_method}")
+        print(f"And writing to {wgts_file}")
         Regrd = E.Regrid( srcField , dstField , 
                       filename = wgts_file,
                       regrid_method=regrid_method,

@@ -53,9 +53,9 @@ def main():
     elif (Dst == 'ne120pg3'):
         BestRegridMethod = 'CONSERVE_2ND' 
     elif (Dst == 'ne30np4'):
-        BestRegridMethod = 'CONSERVE' 
+        BestRegridMethod = 'CONSERVE_2ND' 
     elif (Dst == 'ne30pg3'):
-        BestRegridMethod = 'CONSERVE' 
+        BestRegridMethod = 'CONSERVE_2ND' 
     else:
         BestRegridMethod = 'CONSERVE' 
 

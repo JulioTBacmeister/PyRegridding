@@ -76,7 +76,34 @@ def gridInfo( grid=None , **kwargs ):
     cesm_inputdata_dir = '/glade/campaign/cesm/cesmdata/cseg/inputdata/'
     myGridFiles = '/glade/work/juliob/GridFiles/'
 
+    if ('Vgrid' in kwargs):
+        Vgrid = kwargs['Vgrid']
+        if (Vgrid == 'L120' ):
+            # Read in CAM L120 vertical grid
+            # This is a truncated version of the "healed" WACCM L135 grid, top at 85km
+            VgridFile = f'{myGridFiles}/Vertical/GRID_120L_CAM7_OrigAB_Truncated_L135_c20241011.nc'
+        if (Vgrid == 'L93' ):
+            # Read in CAM L93 vertical grid
+            # The file below though poorly named is the correct one to use for L93
+            VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
+        if (Vgrid == 'L58' ):
+            # Read in CAM L58 vertical grid
+            VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+        if (Vgrid == 'L56_86km' ):
+            # Read in a truncated WACCM (v6 70-level) grid with a top near 86km
+            VgridFile = f'{myGridFiles}/Vertical/GRID_56L_CAM7_TruncatedWACCM-Top86km_c20240705.nc'
+        if (Vgrid == 'L42' ):
+            # Not sure what this 32 level+ PBL refinements ??? Check!! (July 5 2024)
+            VgridFile = f'{myGridFiles}/Vertical/GRID_42L_CAM7.nc'
+        if (Vgrid == 'L32' ):
+            # 32-level CAM6 grid
+            VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
+    else:
+        VgridFile = ''
 
+    if ('VgridOnly' in kwargs):
+        return VgridFile
+    
     # ---------------------------------------------
     # This if block is to account
     # for the fact that sometimes (most times)
@@ -250,26 +277,6 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = ''
         p_00 = 100_000.
 
-    if ('Vgrid' in kwargs):
-        Vgrid = kwargs['Vgrid']
-        if (Vgrid == 'L93' ):
-            # Read in CAM L93 vertical grid
-            # The file below though poorly named is the correct one to use for L93
-            VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
-        if (Vgrid == 'L58' ):
-            # Read in CAM L58 vertical grid
-            VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
-        if (Vgrid == 'L56_86km' ):
-            # Read in a truncated WACCM (v6 70-level) grid with a top near 86km
-            VgridFile = f'{myGridFiles}/Vertical/GRID_56L_CAM7_TruncatedWACCM-Top86km_c20240705.nc'
-        if (Vgrid == 'L42' ):
-            # Not sure what this 32 level+ PBL refinements ??? Check!! (July 5 2024)
-            VgridFile = f'{myGridFiles}/Vertical/GRID_42L_CAM7.nc'
-        if (Vgrid == 'L32' ):
-            # 32-level CAM6 grid
-            VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
-    else:
-        VgridFile = ''
     
     Res = { 'Hkey' : Hkey ,
             'type' :  type ,
