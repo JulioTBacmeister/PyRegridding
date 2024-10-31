@@ -1,5 +1,6 @@
 # Import packages 
 import sys
+sys.path.append('../Utils/')
 
 import xarray as xr
 import numpy as np
@@ -263,3 +264,106 @@ def HorzRG( aSrc, regrd , srcField , dstField , srcGridkey, dstGridkey ):
                     aDst[i,L,:,:] = copy.deepcopy( dstField.data[:,:].transpose() )
                     
     return aDst
+
+######################################################################
+#def WriteWeights( srcScrip , dstScrip , srcType , dstType ,  RegridMethod="CONSERVE_2ND" , **kwargs ):
+def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFiles=None, **kwargs ):
+    """
+    This function returns the regridding objects (Regrid, srcField, dstField) used by ESMF.
+    Src, Dst inputs (required) are code names for grids as recognized in 
+        PyRegridding/Utils/GridUtils.py [.gridInfo]
+    UseFiles (required) decides whether weight files will be processed. 3 behaviors possible.
+        UseFiles=False
+            Simply generate the emsf regridding objects and return
+        UseFiles=True
+            wgts_file string is generated from Dst,Src, RegridMethod
+            If a file name=wgts_file exists
+                Read weights and return esmf regridding objects
+            If a file name=wgts_file DOES NOT exist
+                Generate weights, write file and return esmf regridding objects
+    RegridMethod (optional)
+    """
+    
+    import os
+    import GridUtils as GrU
+
+    if (UseFiles is None ):
+        ErrString = f'You ABSOLUTELY have to set UseFiles = True or False'
+        print( ErrString )
+        return ErrString,-99,-99
+        
+    DstInfo  = GrU.gridInfo(Dst) #,Vgrid=DstVgrid)
+    dstHkey  = DstInfo['Hkey']
+    dstType  =DstInfo['type']
+    dstScrip =DstInfo['scrip']
+
+    SrcInfo = GrU.gridInfo(Src)
+    srcHkey = SrcInfo['Hkey']
+    srcType =SrcInfo['type']
+    srcScrip =SrcInfo['scrip']
+    
+    if(RegridMethod.upper()=='CONSERVE'):
+        regrid_method=E.RegridMethod.CONSERVE 
+    if(RegridMethod.upper()=='CONSERVE_2ND'):
+        regrid_method=E.RegridMethod.CONSERVE_2ND 
+    if(RegridMethod.upper()=='BILINEAR'):
+        regrid_method=E.RegridMethod.BILINEAR 
+    
+    if(srcType.lower()=='mesh'):
+        srcDesc=E.Mesh( filename=srcScrip,
+            filetype=E.FileFormat.SCRIP )
+        
+    if(srcType.lower()=='grid'):
+        srcDesc=E.Grid( filename=srcScrip ,
+            filetype=E.FileFormat.SCRIP ,
+            add_corner_stagger=True   )
+        
+    if(dstType.lower()=='mesh'):
+        dstDesc=E.Mesh( filename=dstScrip,
+            filetype=E.FileFormat.SCRIP )
+        
+    if(dstType.lower()=='grid'):
+        dstDesc=E.Grid( filename=dstScrip ,
+            filetype=E.FileFormat.SCRIP ,
+            add_corner_stagger=True   )
+        
+        
+    if(srcType.lower()=='mesh'):
+        srcField = E.Field(srcDesc, meshloc=E.MeshLoc.ELEMENT )
+    if(srcType.lower()=='grid'):
+        srcField = E.Field(srcDesc )
+
+    if(dstType.lower()=='mesh'):
+        dstField = E.Field(dstDesc, meshloc=E.MeshLoc.ELEMENT )
+    if(dstType.lower()=='grid'):
+        dstField = E.Field(dstDesc )
+
+    print( dstScrip ,'\n',np.shape(dstField.data) )   
+    dstField.data[:]=1e20
+    print( srcScrip ,'\n',np.shape(srcField.data) )   
+    srcField.data[:]=1e20
+
+    if (UseFiles==True):
+        wgts_file=f'/glade/work/juliob/GridFiles/Weights/{Src}_x_{Dst}_{RegridMethod.upper()}.nc'
+        print( wgts_file)
+        if (not os.path.exists(wgts_file)):
+            print(f"Generating regridding weights. Method {RegridMethod} : ESMF method= {regrid_method}")
+            Regrd = E.Regrid( srcField , dstField , 
+                          filename = wgts_file,
+                          regrid_method=regrid_method,
+                          unmapped_action=E.UnmappedAction.IGNORE)
+        else:
+            print(f"Reading weights from {wgts_file} ")
+            Regrd = E.RegridFromFile( srcField , dstField , 
+                          filename = wgts_file )
+    else:
+        print(f"Not dealing with weight files at all - just calculating Regrid object")
+        Regrd = E.Regrid( srcField , dstField , 
+                      regrid_method=regrid_method,
+                      unmapped_action=E.UnmappedAction.IGNORE)
+        
+      
+    return Regrd, srcField , dstField 
+
+#########################
+

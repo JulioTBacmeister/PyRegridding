@@ -87,14 +87,23 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
         else:
             RegridMethod_ = RegridMethod
 
-        regrd, srcf, dstf = erg.GenWrtRdWeights(Dst=Dst , 
-                                                Src=Src , 
-                                                UseFiles=True , 
-                                                RegridMethod = RegridMethod_  )
-        
-        if ( (RegridObj_Out == True) or (xfld_Src is None) ):
-            print( f" Not interpolating. Returning: regrd, srcf, dstf " )
-            return regrd, srcf, dstf
+        if (write_weights==False):
+            regrd, srcf, dstf = erg.Regrid( srcScrip = src_scrip , 
+                                            srcType  = src_type  ,
+                                            dstScrip = dst_scrip ,
+                                            dstType  = dst_type  ,
+                                            RegridMethod = RegridMethod_ )
+            if ( (RegridObj_Out == True) or (xfld_Src is None) ):
+                print( f" Not interpolating. Returning: regrd, srcf, dstf " )
+                return regrd, srcf, dstf
+        else:
+            regrd, srcf, dstf = erg.Regrid( srcScrip = src_scrip , 
+                                            srcType  = src_type  ,
+                                            dstScrip = dst_scrip ,
+                                            dstType  = dst_type  ,
+                                            RegridMethod = RegridMethod_ ,
+                                            write_weights = write_weights, 
+                                            weights_file = weights_file )
             
     else:
         print( f" Getting (regrd, srcf, dstf) from argument " ) 
@@ -225,7 +234,7 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
     return xfld_Dst
 
 
-############################################################################################################
+# ###########################################################################################################
 
 def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=None, pmid_output=False ):
     ##############################################################

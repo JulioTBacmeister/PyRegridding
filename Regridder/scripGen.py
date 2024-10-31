@@ -135,9 +135,18 @@ def latlon_to_scrip( grid_imask=None, file_out=None, **kwargs ):
             if ( (j<5) or (j>ny-5) ):
                 print( j, lat[j],dlat[j],lat_e[j],lat_e[j+1] )
 
-        #print( lat_e )
-        JNorth=np.arange(start=0,stop=ny)
-        JSouth=np.arange(start=1,stop=ny+1)
+        ###################################################################
+        # ChatGPT struggled a bit with why I was getting negative
+        # areas for NOAA SSTs, but in the end we figured it out. This needs 
+        # to be here to ensure JNorth and JSouth are crrect for all grids.
+        # Check if latitudes are increasing or decreasing
+        ###################################################################
+        if lat[0] > lat[-1]:
+            JNorth = np.arange(start=0, stop=ny)
+            JSouth = np.arange(start=1, stop=ny+1)
+        else:
+            JNorth = np.arange(start=1, stop=ny+1)
+            JSouth = np.arange(start=0, stop=ny)
 
         # make 2D
         y_edge   = np.broadcast_to(lat_e[:, None], (ny+1, nx))
@@ -157,7 +166,7 @@ def latlon_to_scrip( grid_imask=None, file_out=None, **kwargs ):
                              x_center + dx / 2.,  # NE
                              x_center - dx / 2.), # NW
                             axis=2)
-
+    
     else:
         try:
             lon in locals()

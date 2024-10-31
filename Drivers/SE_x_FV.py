@@ -54,25 +54,22 @@ importlib.reload( Con )
 def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConservative=False ):
     
 
-    #######################
+    ###############################################
+    # This block creates a destination directory
+    # for the regridded files, by replacing 'hist' 
+    # in the usual cam history path
+    #
+    #      ./{user}/archive/{casename}/atm/hist/ 
+    #
+    # with something like 'regridded'
+    ###############################################
+
     SrcDir  = BaseDir+case+'/atm/hist/'
     SrcFile = SrcDir + case + '.cam.h0.2000-01.nc'
 
-    """
-    ####################
-    if ((Dst == 'fv0.9x1.25') or (Dst =='fv1x1')):
-        DstTag  = '/regridded/'   # new subdirectory tag for regridded data
-    ####################
-    elif (Dst == 'fv0.23x0.31'):
-        DstTag  = '/regridded_0.25/'   # new subdirectory tag for regridded data
-    ####################
-    else: 
-        DstTag  = '/regridded/'   # new subdirectory tag for regridded data
-    """
     DstTag = f'/{DstSubDir}/'
     DstDir = SrcDir.replace('/hist/', DstTag )
 
-    #######
     os.makedirs( DstDir , exist_ok=True )
 
 
@@ -196,9 +193,11 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
 
     #########################################################
     # List of variables to be regridded.
-    # This list should be a super-set of the one in the ADF
-    # config..YAML.
-    # PS needs to be here for 3D vars.
+    #  * This list should be a super-set of the one in the ADF
+    #    config..YAML.
+    #  * PS needs to be here for 3D vars.
+    #  * If a variable is here but not in the history file
+    #    it is just skipped over.
     #########################################################
     ilist = [ 'area'
             , 'SWCF'
@@ -461,11 +460,12 @@ if __name__ == "__main__":
     # Dst     = 'fv0.9x1.25'
     # hsPat = 'cam.h0'
     
-
+    user = os.environ.get('USER') or os.environ.get('USERNAME')
+    default_BaseDir = f"/glade/derecho/scratch/{user}/archive/"
 
     my_parser = arg.ArgumentParser()
     my_parser.add_argument("--case",     type=str )
-    my_parser.add_argument("--BaseDir",  type=str, default="/glade/derecho/scratch/juliob/archive/")
+    my_parser.add_argument("--BaseDir",  type=str, default=default_BaseDir )
     my_parser.add_argument("--ymdPat",  type=str, default="*")
     my_parser.add_argument("--hsPat",  type=str, default="cam.h0")
     my_parser.add_argument("--Src",  type=str, default="ne30pg3")

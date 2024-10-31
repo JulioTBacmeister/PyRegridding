@@ -22,41 +22,13 @@ module load conda
 
 conda activate npl-2023b
 
-#./SE_x_FV.py --case=POLARRES_FMT_x01_E --hsPat=cam.h1 --Src=POLARRES
-#./SE_x_FV.py --case=cDEV_ne120pg3_FMTHIST_DYAMOND_x01_e02 --hsPat=cam.h1i --Src=ne120pg3 --Dst=fvQxQ
-#./SE_x_FV.py --case=cDEV_ne240pg3_FMTHIST_aicn_x02 --hsPat=cam.h0a --Src=ne240pg3 --Dst=latlonOxO
-#./SE_x_FV.py --case=cDEV_ne240pg3_FMTHIST_aicn_x02 --hsPat=cam.h1i --Src=ne240pg3 --Dst=fv1x1 --DstSubDir=regridded_1x1 --AllConservative
-#./SE_x_FV.py --case=c153_ne30pg3_FMTHIST_x02 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1
 
-#./SE_x_FV.py --case=c153_ne240pg3_FMTHIST_aicn_x01 --hsPat=cam.h1i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-09-*'
-
-#./SE_x_FV.py --case=c153_topfix_ne120pg3_FMTHIST_xic_x02 --hsPat=cam.h0a --Src=ne120pg3 --Dst=fv1x1 --ymdPat='*'
-#./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h0a --Src=ne240pg3 --Dst=fv1x1 --ymdPat='*'
-
-#./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h1i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
-#./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h2i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
-#./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h3i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
-
-#./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_L56_86km_aicn_x01 --hsPat=cam.h1i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='*'
-
-
-#./SE_x_FV.py --case=c153_ne240pg3_FMTHIST_aicn_x01 --hsPat=cam.h0a --Src=ne240pg3 --Dst=latlonOxO --ymdPat='*'
-
-#./SE_x_FV.py --case=c153_ne30pg3_FMTHIST_x02 --hsPat=cam.h1i --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-
-#./SE_x_FV.py --case=c160mm_ne30pg3_FMTndg_cciasi_x05 --hsPat=cam.h1i.TAU_uniform --Src=ne30pg3 --Dst=CCIASI  --DstSubDir=CCIASI --ymdPat='*'
-#./SE_x_FV.py --case=c160mm_ne30pg3_FMTndg_cciasi_x05 --hsPat=cam.h1i.TAU_vort500 --Src=ne30pg3 --Dst=CCIASI  --DstSubDir=CCIASI --ymdPat='*'
-
-#./SE_x_FV.py --case=c64_005mm_ne30pg3_FMTHIST_CTL  --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-
-#./SE_x_FV.py --case=c64_005_ne30pg3_FMTHIST_rdgres_x01 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-#./SE_x_FV.py --case=c64_005_ne30pg3_FMTHIST_CTL_x01 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-#./SE_x_FV.py --case=c64_005_ne30pg3_FMTHIST_C5phys_x06 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-
-#./SE_x_FV.py --case=c64_gwR2_ne30pg3_FMTHIST_topfix_x01   --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-./SE_x_FV.py --case=c64_gwR2_ne30pg3_FMTHIST_topfix_rdgres_x02   --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
-
-#./SE_x_FV.py --case=cDEV_ne30pg3_FMTHIST_C5_x01 --hsPat=cam.h0a --Src=ne30pg3 --Dst=fv1x1 --ymdPat='*'
+# Set up to regrid one of the lates eighth degree runs to a regular lat-lon 1/8x1/8 grid.
+# All 3 of the high frequency history streams are regridded h1i, h2i, and h3i
+#----------------------------------------------------------------------------------------
+./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h1i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
+./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h2i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
+./SE_x_FV.py --case=c153_topfix_ne240pg3_FMTHIST_xic_x02 --hsPat=cam.h3i --Src=ne240pg3 --Dst=latlonOxO --ymdPat='2004-07-*'
 
 
 

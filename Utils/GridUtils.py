@@ -48,7 +48,12 @@ def scrip_etc(grid=None):
     return scrip,Hkey,gtype
 
 ##############################
-def latlon(scrip,Hkey,get_area=False):
+def latlon(grid=None, scrip=None,Hkey=None ,get_area=False):
+
+    if ( grid is not None ):
+        Ginfo = gridInfo( grid )
+        scrip=Ginfo['scrip']
+        Hkey=Ginfo['Hkey']
     
     S = xr.open_dataset( scrip )
     
@@ -78,10 +83,18 @@ def gridInfo( grid=None , **kwargs ):
 
     if ('Vgrid' in kwargs):
         Vgrid = kwargs['Vgrid']
+        if (Vgrid == 'L135' ):
+            # Read in CAM L135 vertical grid
+            # This is the "healed" WACCM L135 grid, top at 140km
+            VgridFile = f'{myGridFiles}/Vertical/GRID_135L_CAM7_OrigAB_c20241011.nc'
         if (Vgrid == 'L120' ):
             # Read in CAM L120 vertical grid
             # This is a truncated version of the "healed" WACCM L135 grid, top at 85km
             VgridFile = f'{myGridFiles}/Vertical/GRID_120L_CAM7_OrigAB_Truncated_L135_c20241011.nc'
+        if (Vgrid == 'L94_truncated_110' ):
+            # Read in CAM L94 vertical grid
+            # Truncated version of WACCM L110
+            VgridFile = f'{myGridFiles}/Vertical/GRID_94L_CAM7_WACCM_Truncated_L110_c20241016.nc'
         if (Vgrid == 'L93' ):
             # Read in CAM L93 vertical grid
             # The file below though poorly named is the correct one to use for L93
@@ -116,8 +129,17 @@ def gridInfo( grid=None , **kwargs ):
         IC_for_pg_ = kwargs['IC_for_pg']
     else:
         IC_for_pg_ = False
-    
-    if (grid == 'ne30pg3'):
+
+    # Remember to make all conditions after first 'elif'!!!!
+    #---------------------------------------------------------
+    if (grid == 'ne16pg3'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne16pg3_scrip_170429.nc'
+        TopoFile = 'N/A'
+        p_00 = 100_000.
+
+    elif (grid == 'ne30pg3'):
         Hkey = 'c'
         type='mesh'
         scrip = cesm_inputdata_dir+'share/scripgrids/ne30pg3_scrip_170611.nc'
