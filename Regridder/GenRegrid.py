@@ -2,23 +2,15 @@
 # Import packages 
 import sys
 import os
-# Need to import modules in other directories
-#sys.path.append('../Utils/')
-#-----------------------------------------
-# Find path to this module and calc/append 
-# paths relative to this path 
-#------------------------------------------
-module_a_dir = os.path.dirname(os.path.abspath(__file__))
-utils_path = os.path.join(module_a_dir, '..', 'Utils')
-sys.path.append(utils_path)
-print( f" a path added in {__name__} {utils_path} ")
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
 
 
 import argparse as arg
 
-import GlobalVarClass
-from GlobalVarClass import Gv
 
 
 import xarray as xr
@@ -35,18 +27,20 @@ import glob
 import copy
 import time
 
-import scripGen as SG
-import esmfRegrid as erg
 
+from PyRegridding.Regridder import GlobalVarClass
+from PyRegridding.Regridder.GlobalVarClass import Gv
 
+from PyRegridding.Regridder import scripGen as SG
+from PyRegridding.Regridder import esmfRegrid as erg
+from PyRegridding.Utils import MyConstants as Con
+from PyRegridding.Utils import GridUtils as GrU
+from PyRegridding.Utils import MakePressures as MkP
 # "ChatGPI version" --- 
-import VertRegridFlexLL as vrg
+from PyRegridding.Regridder import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
 
-import GridUtils as GrU
-import MakePressures as MkP
-import humiditycalcs as hum
-import MyConstants as Con
+from PyRegridding.Utils import humiditycalcs as hum
 
 # Reload local packages that are under
 # development
@@ -340,6 +334,10 @@ def xRegrid( ExitAfterTemperature=False ,
                     te=Gv.te_ERA_xzCAM ,
                     p=Gv.pmid_CAM, 
                     Gridkey = Gv.dstTZHkey )
+
+    # Looks like Q can get very negative in spikes ... 
+    # Maybe best fixed in qsat ... 
+    # qx = np.where( qx >= 0. , qx, 0. )
     
     Gv.q_ERA_xzCAM =  copy.deepcopy(qx)
 

@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
+
+
+
 import argparse as arg
 # import modules in other directories
 # sys.path.append('/glade/work/juliob/PyRegridding/Regridder/')
@@ -25,18 +32,17 @@ try:
 except ImportError:
     import esmpy as E
 
-import scripGen as SG
-import esmfRegrid as erg
 
 
+from PyRegridding.Regridder import scripGen as SG
+from PyRegridding.Regridder import esmfRegrid as erg
 # "ChatGPI version" --- 
-import VertRegridFlexLL as vrg
+from PyRegridding.Regridder import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
-
-import GridUtils as GrU
-import MakePressures as MkP
-import humiditycalcs as hum
-import MyConstants as Con
+from PyRegridding.Utils import humiditycalcs as hum
+from PyRegridding.Utils import MyConstants as Con
+from PyRegridding.Utils import GridUtils as GrU
+from PyRegridding.Utils import MakePressures as MkP
 
 # Reload local packages that are under
 # development

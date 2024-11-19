@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
-# This contains all the data
-#----------------------------
-import GlobalVarClass
-from GlobalVarClass import Gv
 
 import xarray as xr
 import numpy as np
@@ -18,11 +18,19 @@ except ImportError:
 import importlib
 import time
 
-import esmfRegrid as erg
+##############################
+# My modules
+##############################
+# This contains all the data.
+# Lives in this directroy.
+#----------------------------
+from PyRegridding.Regridder import GlobalVarClass
+from PyRegridding.Regridder.GlobalVarClass import Gv
+# Other modules
+#----------------
+from PyRegridding.Regridder import esmfRegrid as erg
+from PyRegridding.Utils import GridUtils as GrU
 
-
-sys.path.append('../Utils/')
-import GridUtils as GrU
 
 #-------------------------------------------------------------
 #  Naming conventions

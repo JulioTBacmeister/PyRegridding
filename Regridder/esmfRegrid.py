@@ -1,20 +1,12 @@
 # Import packages 
 import sys
-sys.path.append('../Utils/')
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
 import xarray as xr
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.tri as tri
-import matplotlib.colors as colors
-
-from scipy.io import FortranFile
-
-import cartopy
-import cartopy.crs as ccrs
-import cartopy.feature as cfeature
-#import ana as a
 
 """
 try:
@@ -283,14 +275,23 @@ def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFil
                 Generate weights, write file and return esmf regridding objects
     RegridMethod (optional)
     """
-    
+
+    import time
     import os
-    import GridUtils as GrU
+    from PyRegridding.Utils import GridUtils as GrU
+
+    ##############################
+    #  Begin ...
+    ##############################
+
+    
+    tic_overall = time.perf_counter()
 
     if (UseFiles is None ):
         ErrString = f'You ABSOLUTELY have to set UseFiles = True or False'
         print( ErrString )
         return ErrString,-99,-99
+
         
     DstInfo  = GrU.gridInfo(Dst) #,Vgrid=DstVgrid)
     dstHkey  = DstInfo['Hkey']
@@ -308,6 +309,10 @@ def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFil
         regrid_method=E.RegridMethod.CONSERVE_2ND 
     if(RegridMethod.upper()=='BILINEAR'):
         regrid_method=E.RegridMethod.BILINEAR 
+
+    toc_here = time.perf_counter()
+    pTime = f"Ready to go ... {Src} -x- {Dst} {toc_here - tic_overall:0.4f} seconds"
+    print(pTime, flush=True )
     
     if(srcType.lower()=='mesh'):
         srcDesc=E.Mesh( filename=srcScrip,
@@ -327,6 +332,10 @@ def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFil
             filetype=E.FileFormat.SCRIP ,
             add_corner_stagger=True   )
         
+    toc_here = time.perf_counter()
+    pTime = f"Finished Grid Mesh creation  {toc_here - tic_overall:0.4f} seconds"
+    print(pTime, flush=True )
+        
         
     if(srcType.lower()=='mesh'):
         srcField = E.Field(srcDesc, meshloc=E.MeshLoc.ELEMENT )
@@ -343,6 +352,10 @@ def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFil
     print( srcScrip ,'\n',np.shape(srcField.data) )   
     srcField.data[:]=1e20
 
+    toc_here = time.perf_counter()
+    pTime = f"Finished dstField,srcField  {toc_here - tic_overall:0.4f} seconds"
+    print(pTime, flush=True )
+
     if (UseFiles==True):
         wgts_file=f'/glade/work/juliob/GridFiles/Weights/{Src}_x_{Dst}_{RegridMethod.upper()}.nc'
         print( wgts_file)
@@ -352,16 +365,25 @@ def GenWrtRdWeights( Src=None , Dst=None ,  RegridMethod="CONSERVE_2ND" , UseFil
                           filename = wgts_file,
                           regrid_method=regrid_method,
                           unmapped_action=E.UnmappedAction.IGNORE)
+            toc_here = time.perf_counter()
+            pTime = f"Finished generatind Regrd from scratch {toc_here - tic_overall:0.4f} seconds"
+            print(pTime , flush=True )
         else:
             print(f"Reading weights from {wgts_file} ")
             Regrd = E.RegridFromFile( srcField , dstField , 
                           filename = wgts_file )
+            toc_here = time.perf_counter()
+            pTime = f"Finished generatind Regrd from wgts file {toc_here - tic_overall:0.4f} seconds"
+            print(pTime , flush=True )
     else:
         print(f"Not dealing with weight files at all - just calculating Regrid object")
         Regrd = E.Regrid( srcField , dstField , 
                       regrid_method=regrid_method,
                       unmapped_action=E.UnmappedAction.IGNORE)
         
+        toc_here = time.perf_counter()
+        pTime = f"Finished generatind Regrd from scratch {toc_here - tic_overall:0.4f} seconds"
+        print(pTime , flush=True )
       
     return Regrd, srcField , dstField 
 

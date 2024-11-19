@@ -3,26 +3,21 @@
 
 import sys
 import os
-#sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
 
-#-----------------------------------------
-# Find path to this module and calc/append 
-# paths relative to this path 
-#------------------------------------------
-module_a_dir = os.path.dirname(os.path.abspath(__file__))
-utils_path = os.path.join(module_a_dir, '..', 'Utils')
-sys.path.append(utils_path)
-print( f" a path added in {__name__} {utils_path} ")
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
 
 import numpy as np
 from scipy import interpolate as intr
-
-import GridUtils as GU
-import esmfRegrid as erg
 import time
-
 import importlib
+
+from PyRegridding.Utils import GridUtils as GU
+from PyRegridding.Regridder import esmfRegrid as erg
+
 importlib.reload( GU )
 
 

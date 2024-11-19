@@ -1,5 +1,14 @@
+import sys
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
+
+from PyRegridding.Utils import MyConstants as Con
+
+
+
 import numpy as np
-import MyConstants as Con
 # Physical Constants
 Rgas = Con.Rdry() # 287.0 # J K-1 kg-1
 grav = Con.grav() # 9.8

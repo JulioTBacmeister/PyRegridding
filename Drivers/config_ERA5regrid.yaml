@@ -1,5 +1,5 @@
 Dst: ne30np4
-DstVgrid: L93
+DstVgrid: L135
 IC_for_pg: true
 Resubmit: -1
 StepBy: hour
@@ -8,4 +8,4 @@ TheProcYear: -1
 day: 1
 hour: 6
 month: 1
-year: 1985
+year: 2010

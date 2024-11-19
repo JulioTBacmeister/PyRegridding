@@ -8,12 +8,11 @@ import numpy as np
 import pandas as pd
 import scipy
 
-import FVStagger as FV
+from PyRegridding.Regridder import FVStagger as FV
 
 import time as TimeUtil
 
-#from GlobalVarClass import Gv as *
-from GlobalVarClass import Gv
+from PyRegridding.Regridder.GlobalVarClass import Gv
 
 
 

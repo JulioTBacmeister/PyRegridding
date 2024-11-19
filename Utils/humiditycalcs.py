@@ -19,6 +19,8 @@ def calcvpfromhuss(huss, ps):
 #------------------calculate saturation vapor pressure from temperature 
 #                  (or vapor pressure from dew point temperature)
 #  Based on Bolton (1980) The computation of equivalent potential temperature, MWR
+#   
+#  This is probably VERY BAD in a high top model ...
 #-------------------------------------------------------------------------------------
 def esat(TK):
     """calculate the saturation vapor pressure (in Pa) from T (in K)"""
@@ -30,4 +32,9 @@ def qsat(p,T):
     # saturation specifi humidity from T(K) and P(Pa):
     e=esat(T)
     qs = epsilon * e /( p - (1-epsilon)* e )
+    
+    # Looks like qs might get very negative in spikes ... 
+    # Fix it ... bad ... so bad
+    qs = np.where( qs > 0. , qs, 0. )
+
     return qs

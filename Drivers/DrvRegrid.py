@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
-import argparse as arg
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
+
+import argparse as arg
 import time
 import numpy as np
 
 # import modules in other directories
-sys.path.append('../Regridder/')
-import GenRegrid as GnR
-import Initialize as Init
-import WriteDST as Wrt
-import ReadInSrc as Rd 
+from PyRegridding.Regridder import GenRegrid as GnR
+from PyRegridding.Regridder import Initialize as Init
+from PyRegridding.Regridder import WriteDST as Wrt
+from PyRegridding.Regridder import ReadInSrc as Rd 
 
 import importlib
 importlib.reload( Rd )

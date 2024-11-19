@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# Import packages 
 import sys
 import argparse as arg
-# import modules in other directories
-# sys.path.append('/glade/work/juliob/PyRegridding/Regridder/')
-# sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
-sys.path.append('../Regridder/')
-sys.path.append('../Utils/')
+
+
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
 
 import importlib
@@ -25,18 +25,17 @@ try:
 except ImportError:
     import esmpy as E
 
-import scripGen as SG
-import esmfRegrid as erg
-
-
+from PyRegridding.Regridder import scripGen as SG
+from PyRegridding.Regridder import esmfRegrid as erg
+from PyRegridding.Utils import MyConstants as Con
+from PyRegridding.Utils import GridUtils as GrU
+from PyRegridding.Utils import MakePressures as MkP
 # "ChatGPI version" --- 
-import VertRegridFlexLL as vrg
+from PyRegridding.Regridder import VertRegridFlexLL as vrg
 print( "Using Flexible parallel/serial VertRegrid ")
 
-import GridUtils as GrU
-import MakePressures as MkP
-import humiditycalcs as hum
-import MyConstants as Con
+from PyRegridding.Utils import humiditycalcs as hum
+
 
 # Reload local packages that are under
 # development
@@ -51,7 +50,7 @@ importlib.reload( Con )
 
 
 
-def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj_Out=False , write_weights=False , weights_file=None ):
+def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None ):
     
     ##############################################################
     #  We will refer to '2D' and '3D' fields regardless of the 
@@ -70,7 +69,7 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
 
         
     
-    print( f"Used NEW, concise gridInfo function .... ...." )
+    print( f"\n \n Mapping ... {Src} -x- {Dst} " , flush=True )
 
     # ----------------------------------------------
     # Make object for ESMF regridding from SRC
@@ -92,12 +91,12 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
                                                 UseFiles=True , 
                                                 RegridMethod = RegridMethod_  )
         
-        if ( (RegridObj_Out == True) or (xfld_Src is None) ):
-            print( f" Not interpolating. Returning: regrd, srcf, dstf " )
+        if ( xfld_Src is None ):
+            print( f" Not interpolating. Returning: regrd, srcf, dstf " , flush=True )
             return regrd, srcf, dstf
             
     else:
-        print( f" Getting (regrd, srcf, dstf) from argument " ) 
+        print( f" Getting (regrd, srcf, dstf) from argument " , flush=True ) 
         regrd, srcf, dstf = RegridObj_In[0], RegridObj_In[1], RegridObj_In[2]   
 
     src_shape = np.shape( xfld_Src )
@@ -124,14 +123,14 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
         nz = src_shape[1]
         srcShape = 'tzyx'
     else:
-        print("your array can't be classified " )
+        print("your array can't be classified " , flush=True )
         srcShape='nowayjose'
     
     
     ###########################################################
 
     lat_Dst,lon_Dst = GrU.latlon( scrip=dst_scrip, Hkey=dstHkey )
-    print( f"Used GrU.latlon {dst_scrip} for lat lon ")
+    print( f"Used GrU.latlon {dst_scrip} for lat lon " , flush=True )
 
     ncol,ny,nx=0,0,0
     if (dstHkey == 'c' ):
@@ -226,8 +225,95 @@ def Horz(Dst,Src, xfld_Src=None, RegridMethod=None, RegridObj_In=None, RegridObj
 
 
 ############################################################################################################
+def HorzSlice(Dst=None, Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None ):
+    ##################################################################################
+    # Bare-bones horizontal regridding of ONE horizontal (physically speaking)
+    # slice of data
+    ##################################################################################
+
+    # If ESMF regridding objects are not provided, then generate them.
+    # Note, in this case Src and Dst 'nicknames' for horizontal grids
+    # must also be provided.
+    #--------------------
+    if ( RegridObj_In == None ):
+        
+        # Get Source grid Info
+        SrcInfo = GrU.gridInfo(Src)
+        srcHkey = SrcInfo['Hkey']
+        src_type =SrcInfo['type']
+        src_scrip =SrcInfo['scrip']
+        
+        # Get Destination grid Info
+        DstInfo = GrU.gridInfo(Dst) 
+        dstHkey = DstInfo['Hkey']
+        dst_type =DstInfo['type']
+        dst_scrip =DstInfo['scrip']
+        
+        # Decide on method
+        if (RegridMethod==None):
+            RegridMethod_ = 'CONSERVE_2ND' 
+        else:
+            RegridMethod_ = RegridMethod
+            
+        # Generate ESMF objects
+        regrd, srcf, dstf = erg.GenWrtRdWeights(Dst=Dst , 
+                                                Src=Src , 
+                                                UseFiles=True , 
+                                                RegridMethod = RegridMethod_  )
+        # If condition==True return ESMF objects in a tuple (exit)       
+        if ( xfld_Src is None ):
+            print( f" Not interpolating. Returning: regrd, srcf, dstf ", flush=True  )
+            return regrd, srcf, dstf
+            
+    # ESMF regridding objects have been provided in a tuple.
+    #--------------------
+    else:
+        print( f" Getting (regrd, srcf, dstf) from argument ", flush=True ) 
+        regrd, srcf, dstf = RegridObj_In[0], RegridObj_In[1], RegridObj_In[2]   
+
+    
+    #############################################
+    # mesh-to-mesh
+    #############################################
+    if ((srcHkey == 'c' ) and (dstHkey == 'c')) :    
+        srcf.data = xfld_Src
+        r  = regrd(  srcf ,  dstf )
+        xfld_Dst = dstf.data 
+    #############################################
+    # mesh-to-grid
+    #############################################
+    if ((srcHkey == 'c' ) and (dstHkey == 'xy')) :    
+        srcf.data = xfld_Src
+        r  = regrd(  srcf ,  dstf )
+        xfld_Dst = dstf.data.transpose() 
+    #############################################
+    # grid-to-mesh
+    #############################################
+    if ((srcHkey == 'xy' ) and (dstHkey == 'c')) :    
+        srcf.data = xfld_Src.transpose()
+        r  = regrd(  srcf ,  dstf )
+        xfld_Dst = dstf.data 
+    #############################################
+    # grid-to-grid
+    #############################################
+    if ((srcHkey == 'xy' ) and (dstHkey == 'c')) :    
+        srcf.data = xfld_Src.transpose()
+        r  = regrd(  srcf ,  dstf )
+        xfld_Dst = dstf.data.transpose()
+        
+
+    return xfld_Dst
+
+
+############################################################################################################
 
 def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=None, pmid_output=False ):
+
+    if ( (DstVgrid == SrcVgrid) and (xfld_Src is not None) ):
+        print( f" No need to interpolate in the vertical " )
+        xfld_Dst = xfld_Src
+        return xfld_Dst
+
     ##############################################################
     #  We will refer to '2D' and '3D' fields regardless of the 
     #  dimensions of the array representing them. '2D' will simply 

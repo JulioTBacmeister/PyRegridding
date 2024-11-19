@@ -1,6 +1,15 @@
+import sys
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
+
 import numpy as np
-import MyConstants as C
 import xarray as xr
+
+from PyRegridding.Utils import MyConstants as C
+
+
 
 pi = C.pi()
 

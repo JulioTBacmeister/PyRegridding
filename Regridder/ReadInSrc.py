@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # Import packages 
 import sys
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
-# This contains all the data
-#----------------------------
-import GlobalVarClass
-from GlobalVarClass import Gv
+
 
 
 import xarray as xr
@@ -21,21 +22,26 @@ import importlib
 import copy
 import time
 
-import esmfRegrid as erg
-
-#import cfgrib
-
-
 import dask
 import dask.array as da
 
 
+
+# This contains all the data
+#----------------------------
+from PyRegridding.Regridder import GlobalVarClass
+from PyRegridding.Regridder.GlobalVarClass import Gv
+
+from PyRegridding.Regridder import esmfRegrid as erg
+
 # import modules in other directories
-sys.path.append('../Utils/')
-import GridUtils as GrU
-import MakePressures as MkP
-import humiditycalcs as hum
-import MyConstants as Con
+from PyRegridding.Utils import MyConstants as Con
+from PyRegridding.Utils import GridUtils as GrU
+from PyRegridding.Utils import MakePressures as MkP
+from PyRegridding.Utils import humiditycalcs as hum
+
+
+
 
 # Reload local packages that are under
 # development

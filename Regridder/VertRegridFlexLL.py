@@ -1,16 +1,10 @@
 # Import packages 
 import sys
 import os
-#sys.path.append('../Utils/')
-#sys.path.append('/glade/work/juliob/PyRegridding/Utils/')
-#-----------------------------------------
-# Find path to this module and calc/append 
-# paths relative to this path 
-#------------------------------------------
-module_a_dir = os.path.dirname(os.path.abspath(__file__))
-utils_path = os.path.join(module_a_dir, '..', 'Utils')
-sys.path.append(utils_path)
-print( f" a path added in {__name__} {utils_path} ")
+workdir_ = '/glade/work/juliob'
+if ( workdir_ not in sys.path ):
+    sys.path.append(workdir_)
+    print( f" a path to {workdir_} added in {__name__} ")
 
 
 import xarray as xr
@@ -28,9 +22,10 @@ import glob
 import copy
 import time
 
-import scripGen as SG
-import esmfRegrid as erg
-import MyConstants as Con
+from PyRegridding.Regridder import scripGen as SG
+from PyRegridding.Regridder import esmfRegrid as erg
+from PyRegridding.Utils import MyConstants as Con
+
 
 
 importlib.reload( erg )
