@@ -57,6 +57,23 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None 
     #  dimensions of the array representing them. '2D' will simply 
     #  mean fields with no vertical or time dimension.
     ############################################################
+
+    #######################################
+    # Grab grid monikers from RegridObj_in 
+    # if needed and possible
+    #######################################
+    if (Src is None) and (Dst is None) and (RegridObj_In is not None):
+        if (len(RegridObj_In) >= 5):
+            Src=RegridObj_In[3]
+            Dst=RegridObj_In[4]
+            print( f"Got monikers {Src} and {Dst} from RegridObj_In" )
+        else:
+            raise ValueError("Need Src and Dst")
+    else:
+        print( f"Got monikers {Src} and {Dst} from arguments" )
+
+            
+    
     DstInfo = GrU.gridInfo(Dst) #,Vgrid=DstVgrid)
     dstHkey = DstInfo['Hkey']
     dst_type =DstInfo['type']
@@ -92,8 +109,8 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None 
                                                 RegridMethod = RegridMethod_  )
         
         if ( xfld_Src is None ):
-            print( f" Not interpolating. Returning: regrd, srcf, dstf " , flush=True )
-            return regrd, srcf, dstf
+            print( f" Not interpolating. Returning: regrd, srcf, dstf, {Src}, {Dst} " , flush=True )
+            return regrd, srcf, dstf, Src, Dst
             
     else:
         print( f" Getting (regrd, srcf, dstf) from argument " , flush=True ) 
@@ -139,9 +156,9 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None 
         ny,nx =len( lat_Dst),len( lon_Dst)
 
     #if (dstHkey == 'yx') or (srcShape[-2:] == 'yx' ):
-    if (srcShape[-2:] == 'yx' ):
-        print( "Bomb out ... yx Src shapes not implemented yet " )
-        return
+    #if (srcShape[-2:] == 'yx' ) and (dstHkey == 'yx' ):
+    #    print( "Bomb out ... yx grid-to-grid not implemented yet " )
+    #    return
     
     print( f" dstHkey={dstHkey} , ncol={ncol} , ny={ny}, nx={nx} " )
     print( f" srcShape={srcShape}, nzot={nzot}, nz={nz} ") 
@@ -213,6 +230,80 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None 
         for tin in np.arange( nzot ):
             for zi in np.arange(nz):
                 Slice_Src = xfld_Src[tin,zi,:]
+                Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                regrd = regrd , 
+                                srcField= srcf , 
+                                dstField= dstf , 
+                                srcGridkey= srcHkey ,
+                                dstGridkey= dstHkey )
+                xfld_Dst[tin,zi,:,:] = Slice_Dst
+
+    #############################################
+    # grid-to-mesh
+    #############################################
+    if ((srcShape == 'yx' ) and (dstHkey == 'c')) :    
+        xfld_Dst = np.zeros( (ncol) , dtype=np.float64 )
+        Slice_Src = xfld_Src
+        Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                            regrd = regrd , 
+                            srcField= srcf , 
+                            dstField= dstf , 
+                            srcGridkey= srcHkey ,
+                            dstGridkey= dstHkey )
+        xfld_Dst = Slice_Dst
+    if ((srcShape == 'oyx' ) and (dstHkey == 'c')) :    
+        xfld_Dst = np.zeros( (nzot,ncol) , dtype=np.float64 )
+        for tin in np.arange( nzot ):
+            Slice_Src = xfld_Src[tin,:,:]
+            Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                regrd = regrd , 
+                                srcField= srcf , 
+                                dstField= dstf , 
+                                srcGridkey= srcHkey ,
+                                dstGridkey= dstHkey )
+            xfld_Dst[tin,:] = Slice_Dst
+    if ((srcShape == 'tzyx' ) and (dstHkey == 'c')) :    
+        xfld_Dst = np.zeros( (nzot,nz,ncol) , dtype=np.float64 )
+        for tin in np.arange( nzot ):
+            for zi in np.arange(nz):
+                Slice_Src = xfld_Src[tin,zi,:,:]
+                Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                regrd = regrd , 
+                                srcField= srcf , 
+                                dstField= dstf , 
+                                srcGridkey= srcHkey ,
+                                dstGridkey= dstHkey )
+                xfld_Dst[tin,zi,:] = Slice_Dst
+
+    #############################################
+    # grid-to-grid
+    #############################################
+    if ((srcShape == 'yx' ) and (dstHkey == 'yx')) :    
+        xfld_Dst = np.zeros( (ny,nx) , dtype=np.float64 )
+        Slice_Src = xfld_Src
+        Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                            regrd = regrd , 
+                            srcField= srcf , 
+                            dstField= dstf , 
+                            srcGridkey= srcHkey ,
+                            dstGridkey= dstHkey )
+        xfld_Dst = Slice_Dst
+    if ((srcShape == 'oyx' ) and (dstHkey == 'yx')) :    
+        xfld_Dst = np.zeros( (nzot,ny,nx) , dtype=np.float64 )
+        for tin in np.arange( nzot ):
+            Slice_Src = xfld_Src[tin,:,:]
+            Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
+                                regrd = regrd , 
+                                srcField= srcf , 
+                                dstField= dstf , 
+                                srcGridkey= srcHkey ,
+                                dstGridkey= dstHkey )
+            xfld_Dst[tin,:,:] = Slice_Dst
+    if ((srcShape == 'tzyx' ) and (dstHkey == 'yx')) :    
+        xfld_Dst = np.zeros( (nzot,nz,ny,nx) , dtype=np.float64 )
+        for tin in np.arange( nzot ):
+            for zi in np.arange(nz):
+                Slice_Src = xfld_Src[tin,zi,:,:]
                 Slice_Dst = erg.HorzRG( aSrc = Slice_Src , 
                                 regrd = regrd , 
                                 srcField= srcf , 

@@ -79,6 +79,36 @@ def Pressure ( am, bm, ai, bi, ps , p_00=100_000., Gridkey='tzc' ):
  
     return pmid,pint,delp
 
+def GeopHeight( te, delp, pmid, topo=None , Gridkey='tzc'):
+
+    rho= pmid/(Rgas*te)
+    delz= delp/(grav*rho)
+    
+    if (Gridkey=='tzc'):
+        nt,nz,ncol=np.shape( te )
+        z3e=np.zeros((nt,nz+1,ncol))
+        if (topo is None):
+            topo_x = np.zeros( (nt,ncol) )
+        else:
+            topo_x = np.tile( topo, (nt,1) )
+        z3e[:,nz,:]=topo_x
+        for z in np.arange( start=nz-1,stop=-1,step=-1):
+            z3e[:,z,:] = z3e[:,z+1,:] + delz[:,z,:]   #/(grav*rho[:,z,:])
+            ##z3e[:,z,:] = z3e[:,z+1,:] + delz[:,z,:]   #/(grav*rho[:,z,:])
+
+        # Add topo_x to all levels of z3e
+        #z3e += topo_x[:, None, :]
+
+        z3o = 0.5*( z3e[:,1:,:]+z3e[:,0:-1,:]  )
+    
+    elif (Gridkey=='tzyx'):
+        nt,nz,ny,nx=np.shape( te )
+    elif (Gridkey=='zyx'):
+        nz,ny,nx=np.shape( te )
+    elif (Gridkey=='zc'):
+        nz,ncol=np.shape( te )
+
+    return z3e,z3o
 
 
 def TandP150 ( te, pmid, delp, search_up_L=10, Gridkey='tzc', findHt=150. ):
