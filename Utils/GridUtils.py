@@ -310,6 +310,14 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
         p_00 = 100_000.
 
+    elif (grid == 'validation'  ):
+        # This grid exists for NOAA 0.25 daily SSTs. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/tmp/tmp_validation_scrip.nc'
+        TopoFile = 'N/A'
+        p_00 = 100_000.
+
     else:
         Hkey = ''
         type=''
@@ -391,14 +399,20 @@ def gridKey( Var ):
     return gridKey
 
 # Function to get or create a regrid object
-def regrid_object_lib(RgOb=None,src=None, dst=None, RegridMethod='CONSERVE_2ND',initialize=False):
+def regrid_object_lib(RgOb=None,src=None, dst=None, RegridMethod='CONSERVE_2ND',initialize=False, UseFiles=True ):
 
     if initialize==True:
         RgOb = {}
         return RgOb
 
     if RgOb is None:
-        RgOb = {}
+        RgOb={}
+    
+    # Defien RgOb if it isn't already
+    try:
+        RgOb
+    except NameError:
+        RgOb={}
 
     key = f"{src}_x_{dst}_{RegridMethod}"  # Create a unique key for the pair and method
     try:
@@ -406,7 +420,7 @@ def regrid_object_lib(RgOb=None,src=None, dst=None, RegridMethod='CONSERVE_2ND',
         regrid_object = RgOb[key]
     except KeyError:  # If not, create it
         print(f"{key} will be created !!!!", flush=True)
-        RgOb[key] = RgF.Horz(Src=src, Dst=dst, RegridMethod=RegridMethod )
+        RgOb[key] = RgF.Horz(Src=src, Dst=dst, RegridMethod=RegridMethod, UseFiles=UseFiles )
         regrid_object = RgOb[key]
     else:
         print(f"..... {key} object has already been created, and is being returned as a tuple by this function", flush=True)

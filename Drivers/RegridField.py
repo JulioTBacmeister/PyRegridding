@@ -50,7 +50,7 @@ importlib.reload( Con )
 
 
 
-def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None ):
+def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None, UseFiles=True ):
     
     ##############################################################
     #  We will refer to '2D' and '3D' fields regardless of the 
@@ -105,7 +105,7 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None 
 
         regrd, srcf, dstf = erg.GenWrtRdWeights(Dst=Dst , 
                                                 Src=Src , 
-                                                UseFiles=True , 
+                                                UseFiles=UseFiles , 
                                                 RegridMethod = RegridMethod_  )
         
         if ( xfld_Src is None ):

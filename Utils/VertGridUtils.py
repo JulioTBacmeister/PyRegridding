@@ -1,6 +1,7 @@
 import numpy as np
-import MyConstants as C
 import xarray as xr
+
+from PyRegridding.Utils import MyConstants as C
 
 def Original_as_bs( px , pcross=0.086 , p58=None, gridalign=False ):
     #----------------------------------------------------------------------------------

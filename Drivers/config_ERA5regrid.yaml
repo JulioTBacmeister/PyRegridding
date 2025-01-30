@@ -1,11 +1,11 @@
-Dst: fv1x1
+Dst: ne30np4
 DstVgrid: L93
 IC_for_pg: true
 Resubmit: -1
-StepBy: day
+StepBy: month
 StepN: 1
 TheProcYear: -1
-day: 5
-hour: 99
-month: 9
-year: 2004
+day: 1
+hour: 0
+month: 2
+year: 1990
