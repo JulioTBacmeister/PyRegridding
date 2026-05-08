@@ -221,10 +221,17 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
             , 'OMEGAU'
             , 'OMEGAV'
             , 'RELHUM'
+            , 'PINT'
+            , 'PMID'
+            , 'Z3' 
             , 'TREFHT'
             , 'TS'
             , 'TAUX'
             , 'TAUY'
+            , 'TAUGWX'
+            , 'TAUGWY'
+            , 'TAUBLJX'
+            , 'TAUBLJY'
             , 'FSNT'
             , 'FLNT'
               ,'SHFLX'
@@ -257,6 +264,16 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
               , 'STEND_CLUBB'
               , 'PHIS'
               , 'U10'
+              , 'TMQ'
+              , 'ICEFRAC'
+             ,'FLUT'
+             ,'OMEGA500'
+             ,'Q850'
+             ,'TGCLDIWP'
+             ,'Z500'
+             ,'Z250'
+             ,'uIVT'
+             ,'vIVT'
             ,'UBOT'
             ,'VBOT'
             ,'U850'
@@ -266,7 +283,9 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
              ,'T850'
              ,'T500'
              ,'T200'
-              , 'LANDFRAC' ]
+              , 'LANDFRAC' 
+             ,'TAUE','TAUW','TAUN', 'TAUS'
+            ,'FRONTGF' ]
 
 
     print( file_list )
@@ -363,7 +382,10 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                     len_shap = len( shap )
                     xfld_Src = SrcData[fld].values
                     attrs =  SrcData[fld].attrs 
+                    vdims =  SrcData[fld].dims
+                    print( f'Dims of {fld} are {vdims}' )
 
+                    
                     ####################
                     # The following 2D vs 3D determination
                     # should be done in a better way.
@@ -413,9 +435,15 @@ def Hregrid(case,BaseDir,Dst,Src,ymdPat,hsPat,DstSubDir,clean=False, AllConserva
                             dstF  = dstfC 
                             print(f" using conervative remapping for {fld}")
                             
-                        xfld_Dst = np.zeros( (nt,nz,ny,nx) , dtype=np.float64 )
-                        nlev = nz
-                        dims = ('time','lev','lat','lon',)
+                        varShap = np.shape( xfld_Src )
+                        nlev=varShap[1]
+                        xfld_Dst = np.zeros( (nt,nlev,ny,nx) , dtype=np.float64 )
+                        if ( 'lev' in vdims ):
+                            dims = ('time','lev','lat','lon',)
+                        elif ('ilev' in vdims ):
+                            dims = ('time','ilev','lat','lon',)
+                        print(f"remapping {fld} with {nlev} levels")
+
                         for tin in np.arange( nt ):
                             for L in np.arange( nlev ):
                                 Slice_Src = xfld_Src[tin,L,:]

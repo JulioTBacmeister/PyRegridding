@@ -152,6 +152,35 @@ def VertRG( a_x , zSrc, zDst, Gridkey , fill_value='extrapolate', kind='linear' 
                 a_xzT[:, i] = fint(   zDstT[:, i ] )
 
         a_xz = np.transpose( np.reshape( a_xzT, (nzD,nt,ny,nx) ), (1,0,2,3) )
+
+    if (Gridkey == 'zyx'):
+        # Reshape arrays
+        nzS,ny,nx = np.shape( zSrc )
+        nzD,ny,nx = np.shape( zDst )
+        a_xT        = np.reshape( a_x , (nzS,nx*ny) )
+        zSrcT       = np.reshape( zSrc , (nzS,nx*ny) )
+        zDstT       = np.reshape( zDst , (nzD,nx*ny) )
+        nzS,ntcol = np.shape( zSrcT )
+        nzD,ntcol = np.shape( zDstT )
+        a_xzT = np.zeros( (nzD,ntcol) )
+        
+        if (nworkers > 1):
+            # parallelized loop
+            # Interpolate all columns of data in parallel
+            with multiprocessing.Pool(nworkers) as pool1:
+                results = pool1.starmap(
+                    interpolate_column,
+                    [(zSrcT[:, i], a_xT[:, i], zDstT[:, i], fill_value, kind)
+                     for i in range(zSrcT.shape[1])]  )
+                a_xzT = np.column_stack(results) 
+        else:
+            # Serial loop (Faster if nworkers = 1)
+            for i in np.arange(ntcol):
+                fint=intr.interp1d( x = zSrcT[:,i], y=a_xT[:,i] , 
+                                    fill_value=fill_value, kind=kind  )
+                a_xzT[:, i] = fint(   zDstT[:, i ] )
+
+        a_xz = np.reshape( a_xzT, (nzD,ny,nx) )
         
     toc = time.perf_counter()
     IntrTime = f"Pll'zd Vertical int {toc - tic:0.4f} seconds"

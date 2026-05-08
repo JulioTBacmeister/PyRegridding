@@ -50,7 +50,7 @@ importlib.reload( Con )
 
 
 
-def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None, UseFiles=True ):
+def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None, UseFiles=True, verbose=False ):
     
     ##############################################################
     #  We will refer to '2D' and '3D' fields regardless of the 
@@ -66,11 +66,13 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None,
         if (len(RegridObj_In) >= 5):
             Src=RegridObj_In[3]
             Dst=RegridObj_In[4]
-            print( f"Got monikers {Src} and {Dst} from RegridObj_In" )
+            if (verbose==True):
+                print( f"Got monikers {Src} and {Dst} from RegridObj_In" )
         else:
             raise ValueError("Need Src and Dst")
     else:
-        print( f"Got monikers {Src} and {Dst} from arguments" )
+        if (verbose==True):
+            print( f"Got monikers {Src} and {Dst} from arguments" )
 
             
     
@@ -86,7 +88,8 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None,
 
         
     
-    print( f"\n \n Mapping ... {Src} -x- {Dst} " , flush=True )
+    if (verbose==True):
+        print( f"\n \n Mapping ... {Src} -x- {Dst} " , flush=True )
 
     # ----------------------------------------------
     # Make object for ESMF regridding from SRC
@@ -109,11 +112,13 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None,
                                                 RegridMethod = RegridMethod_  )
         
         if ( xfld_Src is None ):
-            print( f" Not interpolating. Returning: regrd, srcf, dstf, {Src}, {Dst} " , flush=True )
+            if (verbose==True):
+                print( f" Not interpolating. Returning: regrd, srcf, dstf, {Src}, {Dst} " , flush=True )
             return regrd, srcf, dstf, Src, Dst
             
     else:
-        print( f" Getting (regrd, srcf, dstf) from argument " , flush=True ) 
+        if (verbose==True):
+            print( f" Getting (regrd, srcf, dstf) from argument " , flush=True ) 
         regrd, srcf, dstf = RegridObj_In[0], RegridObj_In[1], RegridObj_In[2]   
 
     src_shape = np.shape( xfld_Src )
@@ -147,7 +152,8 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None,
     ###########################################################
 
     lat_Dst,lon_Dst = GrU.latlon( scrip=dst_scrip, Hkey=dstHkey )
-    print( f"Used GrU.latlon {dst_scrip} for lat lon " , flush=True )
+    if (verbose==True):
+        print( f"Used GrU.latlon {dst_scrip} for lat lon " , flush=True )
 
     ncol,ny,nx=0,0,0
     if (dstHkey == 'c' ):
@@ -159,9 +165,10 @@ def Horz(Dst=None,Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In=None,
     #if (srcShape[-2:] == 'yx' ) and (dstHkey == 'yx' ):
     #    print( "Bomb out ... yx grid-to-grid not implemented yet " )
     #    return
-    
-    print( f" dstHkey={dstHkey} , ncol={ncol} , ny={ny}, nx={nx} " )
-    print( f" srcShape={srcShape}, nzot={nzot}, nz={nz} ") 
+
+    if (verbose==True):
+        print( f" dstHkey={dstHkey} , ncol={ncol} , ny={ny}, nx={nx} " )
+        print( f" srcShape={srcShape}, nzot={nzot}, nz={nz} ") 
     
    
     #############################################
@@ -397,8 +404,7 @@ def HorzSlice(Dst=None, Src=None, xfld_Src=None, RegridMethod=None, RegridObj_In
 
 
 ############################################################################################################
-
-def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=None, pmid_output=False ):
+def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=None, pmid_output=False, long_output=False , verbose=False ):
 
     if ( (DstVgrid == SrcVgrid) and (xfld_Src is not None) ):
         print( f" No need to interpolate in the vertical " )
@@ -418,12 +424,14 @@ def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=Non
     bmid_Dst = vDst['hybm'].values
     aint_Dst = vDst['hyai'].values
     bint_Dst = vDst['hybi'].values
-
+    lev_Dst  = 1_000.*( amid_Dst + bmid_Dst )
+    
     vSrc=xr.open_dataset( SrcVgridFile )
     amid_Src = vSrc['hyam'].values
     bmid_Src = vSrc['hybm'].values
     aint_Src = vSrc['hyai'].values
     bint_Src = vSrc['hybi'].values
+    lev_Src  = 1_000.*( amid_Src + bmid_Src )
 
     p_00 = 100_000. # Here we just use the sensible value of p_00
 
@@ -446,9 +454,9 @@ def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=Non
                         p_00=p_00 , 
                         Gridkey = DstTZHkey )
 
-    lnpint_Src = -7_000. * np.log( pint_Src / p_00 )
+    #lnpint_Src = -7_000. * np.log( pint_Src / p_00 )
     lnpmid_Src = -7_000. * np.log( pmid_Src / p_00 )
-    lnpint_Dst = -7_000. * np.log( pint_Dst / p_00 )
+    #lnpint_Dst = -7_000. * np.log( pint_Dst / p_00 )
     lnpmid_Dst = -7_000. * np.log( pmid_Dst / p_00 )
 
     xfld_Dst = vrg.VertRG( a_x  = xfld_Src ,
@@ -458,7 +466,9 @@ def Vert(DstVgrid=None, DstTZHkey=None, SrcVgrid=None, xfld_Src=None, ps_Src=Non
                             kind = 'linear' ) #linea
     
 
-    if (pmid_output==True):
+    if (long_output==True):
+        return xfld_Dst,pmid_Dst,pmid_Src,lev_Dst,lev_Src
+    elif (pmid_output==True):
         return xfld_Dst,pmid_Dst,pmid_Src
     else:
         return xfld_Dst

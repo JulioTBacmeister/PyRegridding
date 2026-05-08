@@ -4,12 +4,6 @@ from datetime import datetime
 import sys
 import copy
 
-#from itertools import product
-
-#import esmlab
-
-#import matplotlib.pyplot as plt
-
 
 #def latlon_to_scrip(nx, ny, lon0=-180., grid_imask=None, file_out=None):
 def latlon_to_scrip( grid_imask=None, file_out=None, **kwargs ):
@@ -177,6 +171,7 @@ def latlon_to_scrip( grid_imask=None, file_out=None, **kwargs ):
             
     print( "Shape Centers ", np.shape( y_center ))
     print( "Shape Corners ", np.shape( y_corner ))
+    print( "SkipAreaCheck ", SkipAreaCheck_ )
     
     # compute area
     y0 = y_corner[:, :, 0] * np.pi / 180.   # south

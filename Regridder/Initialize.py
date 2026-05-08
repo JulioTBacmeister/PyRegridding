@@ -149,19 +149,20 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
         dsTopo_ERA=xr.open_dataset( Gv.src_TopoFile )
         Gv.phis_ERA=dsTopo_ERA['Z_GDS4_HYBL'].values
 
-    # ----------------------------------------------
-    # Look for pre-computed weights file
-    # If none, set params to create weights file
-    # ----------------------------------------------
-    if ( (Src == 'ERA5') and (Dst == 'ne30pg3') ):
-        griddir = "/glade/work/juliob/ERA5-proc/ERA5interp/grids/"
-        wgts_file_Con = griddir + "ERA5_ne30pg3_Conserv_wgts.nc"
-        write_weights = False 
-        read_weights = True 
-    else:
-        wgts_file_Con = "REGRID_"+Src+"_x_"+Dst+"_"+RegridMethod+".nc"
-        write_weights = False 
-        read_weights = False 
+    if (RegridMethod is not None):
+        # ----------------------------------------------
+        # Look for pre-computed weights file
+        # If none, set params to create weights file
+        # ----------------------------------------------
+        if ( (Src == 'ERA5') and (Dst == 'ne30pg3') ):
+            griddir = "/glade/work/juliob/ERA5-proc/ERA5interp/grids/"
+            wgts_file_Con = griddir + "ERA5_ne30pg3_Conserv_wgts.nc"
+            write_weights = False 
+            read_weights = True 
+        else:
+            wgts_file_Con = "REGRID_"+Src+"_x_"+Dst+"_"+RegridMethod+".nc"
+            write_weights = False 
+            read_weights = False 
 
 
 
@@ -174,20 +175,21 @@ def prep(Dst = 'ne30pg3', DstVgrid='L58',  Src='ERA5', WOsrf=False , RegridMetho
         Gv.area_ERA = -9999. #np.reshape( dsERAscrip['grid_area'].values , np.shape( phis_ERA ) )
     else:
         Gv.area_ERA = -9999.
-        
-    # ----------------------------------------------
-    # Make object for ESMF regridding from SRC
-    # grid to CAM target. Scrip files need to be provided even 
-    # when a weight file is used
-    # ----------------------------------------------
-    Gv.regrd, Gv.srcf, Gv.dstf = erg.Regrid( srcScrip = Gv.src_scrip , 
-                                    srcType  = Gv.src_type  ,
-                                    dstScrip = Gv.dst_scrip ,
-                                    dstType  = Gv.dst_type  ,
-                                    write_weights = write_weights ,
-                                    read_weights = read_weights ,
-                                    weights_file = wgts_file_Con ,
-                                    RegridMethod = RegridMethod )
+
+    if (RegridMethod is not None):
+        # ----------------------------------------------
+        # Make object for ESMF regridding from SRC
+        # grid to CAM target. Scrip files need to be provided even 
+        # when a weight file is used
+        # ----------------------------------------------
+        Gv.regrd, Gv.srcf, Gv.dstf = erg.Regrid( srcScrip = Gv.src_scrip , 
+                                        srcType  = Gv.src_type  ,
+                                        dstScrip = Gv.dst_scrip ,
+                                        dstType  = Gv.dst_type  ,
+                                        write_weights = write_weights ,
+                                        read_weights = read_weights ,
+                                        weights_file = wgts_file_Con ,
+                                        RegridMethod = RegridMethod )
     
 
 

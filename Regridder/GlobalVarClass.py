@@ -4,6 +4,9 @@ class VariableContainer:
         self.MyDstVgrid=None
         self.MySrc=None
 
+        self.SrcDir=None
+        self.SrcTimeStamp=None
+        
         self.regrd=None
         self.srcf=None
         self.dstf=None

@@ -1,0 +1,5 @@
+For DYAMOND 
+
+/glade/campaign/cesm/cesmdata/inputdata/share/scripgrids/mpasa120_SCRIP_desc_211008.nc
+
+All of July 2016

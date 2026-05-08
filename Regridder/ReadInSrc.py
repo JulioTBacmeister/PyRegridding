@@ -110,10 +110,15 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     print(monStr)
     print(ymdh) 
 
-    era5dir = "/glade/campaign/collections/rda/data/ds633.6/e5.oper.an.ml/"
+    #era5dir = "/glade/campaign/collections/rda/data/ds633.6/e5.oper.an.ml/"
+    #          /glade/campaign/collections/rda/data/d633006/
+    era5dir = "/glade/campaign/collections/rda/data/d633006/e5.oper.an.ml/"
     wrkdir=era5dir+monStr+"/"
 
     print(Gv.dstTZHkey)
+
+    Gv.SrcDir=wrkdir
+    Gv.SrcTimeStamp=ymdh
 
     #Define all file names for later use in dask function
     #-----------------------------------------------------
@@ -139,6 +144,8 @@ def get_ERA5( year=2022, month=11, day=1, hour0=99):
     dsW_ERA   = datasets[5] 
 
     """
+    print( spfile )
+    
     #Serial read
     #--------------
     print( 'Serial read of data ' )
@@ -339,3 +346,123 @@ def get_Src( year=2022, month=11, day=1, hour0=99):
         rcode=-999
         
     return rcode
+
+def get_ERA5_just_VQ( year=2022, month=11, day=1, hour0=99):
+
+    print(f'{ get_ERA5_just_VQ} {Gv.MySrc}'  , flush=True)
+
+    try:
+        Gv.MySrc
+        if ( Gv.MySrc != 'ERA5'):
+            print( "You shouldnt be here - ABORT")
+            rcode=-1
+            return rcode
+    except NameError:
+        print( 'go on ' )
+
+    tic_overall = time.perf_counter()
+
+    monStr=str( year ).zfill(4)+str(month).zfill(2)
+    # CAM history style yyyy-mm-dd string
+    ymdStr=str( year ).zfill(4) + '-' + str(month).zfill(2) + '-' + str(day).zfill(2)
+
+    if ( hour0 != 99 ):
+        hour1=hour0+5
+        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour0).zfill(2)
+        ymdh1=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+str(hour1).zfill(2)
+        ymdh=ymdh0+'_'+ymdh1
+    else:
+        ymdh0=str( year ).zfill(4)+str(month).zfill(2)+str(day).zfill(2)+"*"
+        ymdh=ymdh0
+        
+    print( "Time tags for ERA5 files ..." , flush=True)
+    print(monStr , flush=True)
+    print(ymdh , flush=True) 
+
+    #era5dir = "/glade/campaign/collections/rda/data/ds633.6/e5.oper.an.ml/"
+    #          /glade/campaign/collections/rda/data/d633006/
+    era5dir = "/glade/campaign/collections/rda/data/d633006/e5.oper.an.ml/"
+    wrkdir=era5dir+monStr+"/"
+
+    print(Gv.dstTZHkey)
+
+
+    Gv.SrcDir=wrkdir
+    Gv.SrcTimeStamp=ymdh
+
+
+    print( "In reda era ", Gv.SrcDir, Gv.SrcTimeStamp  , flush=True )
+    
+    #Define all file names for later use in dask function
+    #-----------------------------------------------------
+    spfile= wrkdir + 'e5.oper.an.ml.128_134_sp.regn320sc.'+ymdh+'.nc'
+    tfile = wrkdir + 'e5.oper.an.ml.0_5_0_0_0_t.regn320sc.'+ymdh+'.nc'
+    qfile = wrkdir + 'e5.oper.an.ml.0_5_0_1_0_q.regn320sc.'+ymdh+'.nc'
+    ufile = wrkdir + 'e5.oper.an.ml.0_5_0_2_2_u.regn320uv.'+ymdh+'.nc'
+    vfile = wrkdir + 'e5.oper.an.ml.0_5_0_2_3_v.regn320uv.'+ymdh+'.nc'
+    wfile = wrkdir + 'e5.oper.an.ml.0_5_0_2_8_w.regn320sc.'+ymdh+'.nc'
+    all_ERA_files = [ spfile , tfile, qfile, ufile, vfile, wfile ]
+    
+    #Serial read
+    #--------------
+    print( 'Serial read of data ' )
+    tic = time.perf_counter()
+    dsPS_ERA  = xr.open_mfdataset( spfile, data_vars='different', coords='different' )
+    dsQ_ERA   = xr.open_mfdataset( qfile,  data_vars='different', coords='different' )
+    dsV_ERA   = xr.open_mfdataset( vfile , data_vars='different', coords='different')
+    toc = time.perf_counter()
+    print( all_ERA_files )
+    pTime = f"Reading data vars for {ymdh} took  {toc - tic_overall:0.4f} seconds"
+    print(pTime , flush=True)
+
+   
+
+    tic = time.perf_counter()
+    Gv.ps_ERA = dsPS_ERA['SP'].values
+    Gv.q_ERA  = dsQ_ERA['Q'].values
+    Gv.v_ERA  = dsV_ERA['V'].values
+
+    Gv.lon_ERA = dsQ_ERA['longitude'].values
+    Gv.lat_ERA = dsQ_ERA['latitude'].values
+
+    #-----------------------------------------------
+    # Get hybrid eta-coordinate coefficients for ERA5
+    #-----------------------------------------------
+    Gv.amid_ERA = dsQ_ERA['a_model'].values 
+    Gv.bmid_ERA = dsQ_ERA['b_model'].values
+    Gv.aint_ERA = dsQ_ERA['a_half'].values 
+    Gv.bint_ERA = dsQ_ERA['b_half'].values
+    print( "shape of a_model ", np.shape( Gv.amid_ERA )  , flush=True) 
+
+    
+    toc = time.perf_counter()
+    pTime = f"Extracting values from Xarrays took {toc - tic_overall:0.4f} seconds"
+    print(pTime , flush=True)
+   
+    #---------------------------
+    # Get shape of ERA data
+    #-----------------------------
+    nt,nL,nx,ny = np.shape( Gv.q_ERA )
+
+    if ( hour0 != 99 ):
+        ymdhStr = ymdStr + ' ' + str( hour0 ).zfill(2)
+    else:
+        ymdhStr = ymdStr
+
+    pmid,pint,delp = MkP.Pressure( am=Gv.amid_ERA , bm=Gv.amid_ERA , ai=Gv.aint_ERA , bi=Gv.bint_ERA , ps = Gv.ps_ERA , p_00= 1.0 , Gridkey='tzyx' )
+    Gv.pmid_ERA = pmid
+    Gv.pint_ERA = pint
+    Gv.delp_ERA = delp
+
+    PdTime_ERA = pd.date_range( ymdhStr , periods=nt,freq='h')
+    Gv.pdTime_ERA = pd.to_datetime( PdTime_ERA.values )
+
+    toc = time.perf_counter()
+    pTime = f"Reading one set of ERA5 vars took  {toc - tic_overall:0.4f} seconds"
+    print(pTime , flush=True)
+
+    # To make this code general there should be a split here,
+    # i.e., after reading in all the data to process
+    rcode=1
+    return rcode
+

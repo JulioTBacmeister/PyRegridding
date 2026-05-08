@@ -58,6 +58,23 @@ def scrip_etc(grid=None):
     return scrip,Hkey,gtype
 
 ##############################
+def vgrid(VgridFile=None, edges=False ):
+
+    Vg = xr.open_dataset( VgridFile )
+
+
+    plev  = 1_000. * ( Vg.hyam + Vg.hybm )
+    zlev  = -7.0 * np.log( plev / 1_000. ) 
+    plevi = 1_000. * ( Vg.hyai + Vg.hybi )
+    zlevi = -7.0 * np.log( plevi / 1_000. ) 
+
+    if (edges == False ):
+        return plev,zlev
+    else:
+        return plevi,zlevi
+        
+    
+##############################
 def latlon(grid=None, scrip=None,Hkey=None ,get_area=False):
 
     if ( grid is not None ):
@@ -101,6 +118,10 @@ def gridInfo( grid=None , **kwargs ):
             # Read in CAM L120 vertical grid
             # This is a truncated version of the "healed" WACCM L135 grid, top at 85km
             VgridFile = f'{myGridFiles}/Vertical/GRID_120L_CAM7_OrigAB_Truncated_L135_c20241011.nc'
+        if (Vgrid == 'L107' ):
+            # Read in CAM L120 vertical grid
+            # This is a truncated version of the "healed" WACCM L135 grid, top at 85km
+            VgridFile = f'{myGridFiles}/Vertical/GRID_107L_WACCM.nc'
         if (Vgrid == 'L94_truncated_110' ):
             # Read in CAM L94 vertical grid
             # Truncated version of WACCM L110
@@ -109,9 +130,15 @@ def gridInfo( grid=None , **kwargs ):
             # Read in CAM L93 vertical grid
             # The file below though poorly named is the correct one to use for L93
             VgridFile = f'{myGridFiles}/Vertical/GRID_93L_CAM7_OrigAB_c20240514.nc'
+        if (Vgrid == 'L83' ):
+            # Read in CAM L83 vertical grid
+            VgridFile = f'{myGridFiles}/Vertical/GRID_83L_CAM7_c20250210.nc'            
         if (Vgrid == 'L58' ):
             # Read in CAM L58 vertical grid
             VgridFile = f'{myGridFiles}/Vertical/GRID_48_taperstart10km_lowtop_BL10_v3p1_beta1p75.nc'
+        if (Vgrid == 'L68' ):
+            # Read in CAM L58 vertical grid
+            VgridFile = f'{myGridFiles}/Vertical/L68_grid.nc'
         if (Vgrid == 'L56_86km' ):
             # Read in a truncated WACCM (v6 70-level) grid with a top near 86km
             VgridFile = f'{myGridFiles}/Vertical/GRID_56L_CAM7_TruncatedWACCM-Top86km_c20240705.nc'
@@ -121,6 +148,12 @@ def gridInfo( grid=None , **kwargs ):
         if (Vgrid == 'L32' ):
             # 32-level CAM6 grid
             VgridFile = f'{myGridFiles}/Vertical/GRID_32L_CAM6.nc'
+        if (Vgrid == 'ERA5' ):
+            # 32-level CAM6 grid
+            VgridFile = f'{myGridFiles}/Vertical/GRID_137L_ERA5.nc'
+        if (Vgrid == 'WACCM6' ):
+            # 32-level CAM6 grid
+            VgridFile = f'{myGridFiles}/Vertical/GRID_WACCM6_CMIP6.nc'
     else:
         VgridFile = ''
 
@@ -152,7 +185,7 @@ def gridInfo( grid=None , **kwargs ):
     elif (grid == 'ne30pg3'):
         Hkey = 'c'
         type='mesh'
-        scrip = cesm_inputdata_dir+'share/scripgrids/ne30pg3_scrip_170611.nc'
+        scrip = cesm_inputdata_dir+'share/scripgrids/ne30pg3_scrip_170417.nc'   # ne30pg3_scrip_170611.nc'
         #TopoFile = cesm_inputdata_dir+'atm/cam/topo/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_20230105.nc'
         TopoFile = '/glade/campaign/cgd/amp/pel/topo/files/se/ne30pg3_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240117.nc'
         p_00 = 100_000.
@@ -222,6 +255,19 @@ def gridInfo( grid=None , **kwargs ):
             TopoFile = 'N/A' 
         p_00 = 100_000.
 
+    elif (grid == 'ne16np4'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/    ... .nc'
+        if (IC_for_pg_ ==True):
+            TopoFile = '/glade/derecho/scratch/pel/ne16pg3_gmted2010_modis_bedmachine_nc3000_Laplace0200_20230202.nc'
+            print( f' Grabbed pg3 TopoFile even though grid is {grid}' )
+        else:
+            TopoFile = 'N/A' 
+        p_00 = 100_000.
+
+    # topo for ne16
+    # 
     elif (grid == 'ne4np4'):
         Hkey = 'c'
         type='mesh'
@@ -257,6 +303,27 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = 'N/A'
         p_00 = 100_000.
 
+    elif (grid == 'nhemitc'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = myGridFiles+'/Scrip/ne0np4nhemitc.ne30x4.g_scrip.nc'
+        TopoFile = 'N/A'
+        p_00 = 100_000.
+
+    elif (grid == 'mpasa120'):
+        Hkey = 'c'
+        type='mesh'
+        scrip = cesm_inputdata_dir+'share/scripgrids/mpasa120_SCRIP_desc_211008.nc'
+        TopoFile = cesm_inputdata_dir+'atm/cam/topo/mpas/mpasa120_gmted2010_modis_bedmachine_nc3000_Laplace0100_noleak_20240507.nc'
+        p_00 = 100_000.
+
+    elif ((grid == 'fv1.9x2.5') or (grid=='fv2x2')):
+        Hkey = 'yx'
+        type='grid'
+        scrip = cesm_inputdata_dir+'share/scripgrids/fv1.9x2.5_141008.nc'
+        TopoFile = cesm_inputdata_dir+'atm/cam/topo/fv_1.9x2.5_nc3000_Nsw084_Nrs016_Co120_Fi001_ZR_GRNL_c190405.nc'
+        p_00 = 100_000.
+
     elif ((grid == 'fv0.9x1.25') or (grid=='fv1x1')):
         Hkey = 'yx'
         type='grid'
@@ -264,7 +331,7 @@ def gridInfo( grid=None , **kwargs ):
         TopoFile = cesm_inputdata_dir+'atm/cam/topo/fv_0.9x1.25_nc3000_Nsw042_Nrs008_Co060_Fi001_ZR_160505.nc'
         p_00 = 100_000.
 
-    elif ((grid == 'fv0.23x0.31') or (grid == 'fvQxQ') or (grid=='quarter degree') or (grid=='25km') ):
+    elif ((grid == 'fv0.23x0.31') or (grid == 'fvQxQ') ):
         # This grid exists primarily for plotting. So actual topo is not really needed
         Hkey = 'yx'
         type='grid'
@@ -273,10 +340,47 @@ def gridInfo( grid=None , **kwargs ):
         p_00 = 100_000.
 
     elif ((grid == 'latlonOxO') or (grid=='eighth degree') or (grid=='12km') or (grid=='14km') ):
+        # 1/8 x 1/8 degree uniform lat-lon grid. Centers, i.e., lat goes from -90+1/16 to 90-1/16
         # This grid exists primarily for plotting. So actual topo is not really needed
         Hkey = 'yx'
         type='grid'
         scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_OxO_scrip.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
+    elif ((grid == 'latlonQxQ') ):
+        # 1/4 x 1/4 degree uniform lat-lon grid. Centers, i.e., lat goes from -90+1/8 to 90-1/8
+        # This grid exists primarily for plotting. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_QxQ_scrip.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
+    elif ((grid == 'latlonQxQe') ):
+        # 1/4 x 1/4 degree uniform lat-lon grid. Edges, i.e., lat goes from -90 to 90
+        # This grid exists primarily for plotting. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_QxQ_scrip_edge.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
+    elif ((grid == 'latlon1x1e') ):
+        # 1/4 x 1/4 degree uniform lat-lon grid. Edges, i.e., lat goes from -90 to 90
+        # This grid exists primarily for plotting. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_1x1_scrip_edge.nc'
+        TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
+        p_00 = 100_000.
+
+    elif ((grid == 'latlon_weird_192x288') ):
+        # 1/4 x 1/4 degree uniform lat-lon grid. Edges, i.e., lat goes from -90 to 90
+        # This grid exists primarily for plotting. So actual topo is not really needed
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/GridFiles/Scrip/latlon_weird_192x288.nc'
         TopoFile = 'N/A' #cesm_inputdata_dir+'atm/cam/topo/  ??? '
         p_00 = 100_000.
 
@@ -293,6 +397,13 @@ def gridInfo( grid=None , **kwargs ):
         type='grid'
         scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_640x1280_scrip.nc'
         TopoFile = '/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
+        p_00 = 1.0
+
+    elif (grid == 'ERA5_720x1440'):
+        Hkey = 'yx'
+        type='grid'
+        scrip = '/glade/work/juliob/ERA5-proc/ERA5interp/grids/ERA5_720x1440_scrip.nc'
+        TopoFile = 'N/A'  #/glade/work/juliob/ERA5-proc/ERA5interp/phis/ERA5_phis.nc'
         p_00 = 1.0
 
     elif (grid == 'ERAI'):
